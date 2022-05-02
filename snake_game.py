@@ -89,12 +89,16 @@ class SnakeGame:
         self.food = Point(x, y)
 
     def _update_ui(self):
+        #* warnain background
         self.display.fill(Color.BACKGROUND)
 
-        #* gambar snake
+        #* gambar kepala
+        pygame.draw.rect(self.display, Color.SNAKE_BORDER, pygame.Rect(self.head.x, self.head.y, BLOCK_SIZE, BLOCK_SIZE))
+
+        #* gambar badan snake
         coor_border = BLOCK_SIZE // 5
         size_border = BLOCK_SIZE*3//5
-        for point in self.snake:
+        for point in self.snake[1:]:
             pygame.draw.rect(self.display, Color.SNAKE_BODY, pygame.Rect(point.x, point.y, BLOCK_SIZE, BLOCK_SIZE))
             pygame.draw.rect(self.display, Color.SNAKE_BORDER, pygame.Rect(point.x+coor_border, point.y+coor_border, size_border, size_border))
         
@@ -103,9 +107,9 @@ class SnakeGame:
         
         #* gambar score
         text = font.render(f"Score: {self.score}", True, Color.SCORE)
-        self.display.blit(text, [0, 0])
+        self.display.blit(text, (0, 0))
         
-        #* update
+        #* update semua
         pygame.display.flip() 
 
     def _move(self, direction):
