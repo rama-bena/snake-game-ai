@@ -4,13 +4,13 @@ from direction import Direction
 from color import Color
 from collections import namedtuple
 
-pygame.init()
-Point = namedtuple('Point', 'x, y')
 
 #* --------------------------------- Konstanta -------------------------------- #
 BLOCK_SIZE = 20
-SPEED = 10
+SPEED = 5
+Point = namedtuple('Point', 'x, y')
 #* ---------------------------- Inisialisasi pygame --------------------------- #
+pygame.init()
 font = pygame.font.SysFont('arial', 25)
 
 class SnakeGame:
@@ -25,13 +25,14 @@ class SnakeGame:
 
         #* Init snake state
         self.direction = Direction.RIGHT
-        self.head = Point(self.width//2, self.height//2)
+        self.head = Point(((self.width//2)//BLOCK_SIZE)*BLOCK_SIZE, 
+                            ((self.height//2)//BLOCK_SIZE)*BLOCK_SIZE)
         self.snake = [self.head,    # Isi snake awal, kepala
                       Point(self.head.x-BLOCK_SIZE, self.head.y),   # badan di kiri kepala
                       Point(self.head.x-(2*BLOCK_SIZE), self.head.y)]   # badan kedua 2 kali dikiri kepala 
         
         #* Init score dan food
-        self.score =0         
+        self.score = 0         
         self.food = None
         self._place_food()
         
@@ -68,8 +69,8 @@ class SnakeGame:
     def _place_food(self):
         # buat daftar koordinat yang tidak isi ular
         empty_space = []
-        for i in range(0, self.width, BLOCK_SIZE):
-            for j in range(0, self.height, BLOCK_SIZE):
+        for i in range(0, self.width-BLOCK_SIZE, BLOCK_SIZE):
+            for j in range(0, self.height-BLOCK_SIZE, BLOCK_SIZE):
                 if Point(i,j) not in self.snake:
                     empty_space.append((i, j))
         # pilih random tempat food
