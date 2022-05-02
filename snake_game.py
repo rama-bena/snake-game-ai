@@ -40,19 +40,7 @@ class SnakeGame:
 
     def play_step(self):
         #* Cek ditekan keyboard
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:   # klik keluar
-                pygame.quit()
-                quit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    self.direction = Direction.LEFT
-                elif event.key == pygame.K_RIGHT:
-                    self.direction = Direction.RIGHT
-                elif event.key == pygame.K_UP:
-                    self.direction = Direction.UP
-                elif event.key == pygame.K_DOWN:
-                    self.direction = Direction.DOWN
+        self._keyboard_listener()
 
         #* Gerak
         self._move(self.direction)
@@ -111,6 +99,25 @@ class SnakeGame:
         
         #* Update semua
         pygame.display.flip() 
+
+    def _keyboard_listener(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:   # klik keluar
+                pygame.quit()
+                quit()
+            if event.type == pygame.KEYDOWN: # keyboard ditekan
+                if event.key == pygame.K_LEFT:
+                    if self.direction != Direction.RIGHT:
+                        self.direction = Direction.LEFT
+                elif event.key == pygame.K_RIGHT:
+                    if self.direction != Direction.LEFT:
+                        self.direction = Direction.RIGHT
+                elif event.key == pygame.K_UP:
+                    if self.direction != Direction.DOWN:
+                        self.direction = Direction.UP
+                elif event.key == pygame.K_DOWN:
+                    if self.direction != Direction.UP:
+                        self.direction = Direction.DOWN
 
     def _move(self, direction):
         x = self.head.x
