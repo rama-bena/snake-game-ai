@@ -9,7 +9,7 @@ Point = namedtuple('Point', 'x, y')
 
 #* --------------------------------- Konstanta -------------------------------- #
 BLOCK_SIZE = 20
-SPEED = 40
+SPEED = 10
 #* ---------------------------- Inisialisasi pygame --------------------------- #
 font = pygame.font.SysFont('arial', 25)
 
@@ -29,12 +29,11 @@ class SnakeGame:
         self.snake = [self.head,    # Isi snake awal, kepala
                       Point(self.head.x-BLOCK_SIZE, self.head.y),   # badan di kiri kepala
                       Point(self.head.x-(2*BLOCK_SIZE), self.head.y)]   # badan kedua 2 kali dikiri kepala 
-
         #* init another variable
         self.score =0         
         self.food = None
         self._place_food()
-
+        #* last thing update UI
         self._update_ui()
 
     def play_step(self):
@@ -63,6 +62,7 @@ class SnakeGame:
         if self._is_collision():
             game_over = True
             return game_over, self.score
+
         # 4. place new food or just move
         if self.head == self.food:
             self.score += 1
@@ -76,7 +76,6 @@ class SnakeGame:
 
         # 6. return game over and score
         return game_over, self.score
-
 
     def _place_food(self):
         # buat daftar koordinat yang tidak isi ular
@@ -104,7 +103,7 @@ class SnakeGame:
         
         #* gambar score
         text = font.render(f"Score: {self.score}", True, Color.SCORE)
-        self.display.blit(text, (0, 0))
+        self.display.blit(text, [0, 0])
         
         #* update
         pygame.display.flip() 
@@ -113,9 +112,9 @@ class SnakeGame:
         x = self.head.x
         y = self.head.y
         if direction == Direction.LEFT:
-            x += BLOCK_SIZE
-        elif direction == Direction.RIGHT:
             x -= BLOCK_SIZE
+        elif direction == Direction.RIGHT:
+            x += BLOCK_SIZE
         elif direction == Direction.UP:
             y -= BLOCK_SIZE
         elif direction == Direction.DOWN:
