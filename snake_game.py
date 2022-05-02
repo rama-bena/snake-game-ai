@@ -18,29 +18,30 @@ class SnakeGame:
         self.width = width
         self.height = height
         
-        #* init display
+        #* Init display
         self.display = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption('Snake Game by Rama Bena')
         self.clock = pygame.time.Clock()
 
-        #* init snake state
+        #* Init snake state
         self.direction = Direction.RIGHT
         self.head = Point(self.width//2, self.height//2)
         self.snake = [self.head,    # Isi snake awal, kepala
                       Point(self.head.x-BLOCK_SIZE, self.head.y),   # badan di kiri kepala
                       Point(self.head.x-(2*BLOCK_SIZE), self.head.y)]   # badan kedua 2 kali dikiri kepala 
-        #* init another variable
+        
+        #* Init score dan food
         self.score =0         
         self.food = None
         self._place_food()
-        #* last thing update UI
+        
+        #* Terakhir update UI
         self._update_ui()
 
     def play_step(self):
-        # 1. collect user input
+        #* Cek ditekan keyboard
         for event in pygame.event.get():
             if event.type == pygame.QUIT:   # klik keluar
-                print("Masuk sini")
                 pygame.quit()
                 quit()
             if event.type == pygame.KEYDOWN:
@@ -53,28 +54,27 @@ class SnakeGame:
                 elif event.key == pygame.K_DOWN:
                     self.direction = Direction.DOWN
 
-        # 2. move
+        #* Gerak
         self._move(self.direction)
         self.snake.insert(0, self.head)
 
-        # 3. check if game over
+        #* Cek nabrak->game over
         game_over = False
         if self._is_collision():
             game_over = True
             return game_over, self.score
 
-        # 4. place new food or just move
+        #* Cek makan food atau tidak
         if self.head == self.food:
             self.score += 1
             self._place_food()
         else:
             self.snake.pop()
 
-        # 5. update ui and clock
+        #* Update UI dan delay 
         self._update_ui()
         self.clock.tick(SPEED)
 
-        # 6. return game over and score
         return game_over, self.score
 
     def _place_food(self):
@@ -89,27 +89,27 @@ class SnakeGame:
         self.food = Point(x, y)
 
     def _update_ui(self):
-        #* warnain background
+        #* Warnain background
         self.display.fill(Color.BACKGROUND)
 
-        #* gambar kepala
+        #* Gambar kepala
         pygame.draw.rect(self.display, Color.SNAKE_BORDER, pygame.Rect(self.head.x, self.head.y, BLOCK_SIZE, BLOCK_SIZE))
 
-        #* gambar badan snake
+        #* Gambar badan snake
         coor_border = BLOCK_SIZE // 5
         size_border = BLOCK_SIZE*3//5
         for point in self.snake[1:]:
             pygame.draw.rect(self.display, Color.SNAKE_BODY, pygame.Rect(point.x, point.y, BLOCK_SIZE, BLOCK_SIZE))
             pygame.draw.rect(self.display, Color.SNAKE_BORDER, pygame.Rect(point.x+coor_border, point.y+coor_border, size_border, size_border))
         
-        #* gambar food
+        #* Gambar food
         pygame.draw.rect(self.display, Color.FOOD, pygame.Rect(self.food.x, self.food.y, BLOCK_SIZE, BLOCK_SIZE))
         
-        #* gambar score
+        #* Gambar score
         text = font.render(f"Score: {self.score}", True, Color.SCORE)
         self.display.blit(text, (0, 0))
         
-        #* update semua
+        #* Update semua
         pygame.display.flip() 
 
     def _move(self, direction):
@@ -127,10 +127,10 @@ class SnakeGame:
         self.head = Point(x, y)
 
     def _is_collision(self):
-        # hits boundary
+        #* Nabrak sisi
         if self.head.x>self.width-BLOCK_SIZE or self.head.x<0 or self.head.y>self.height-BLOCK_SIZE or self.head.y<0:
             return True
-        # hits itself
+        #* Nabrak diri
         if self.head in self.snake[1:]:
             return True
         return False 
