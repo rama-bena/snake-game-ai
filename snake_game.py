@@ -4,17 +4,20 @@ from direction import Direction
 from color import Color
 from collections import namedtuple
 
-
-#* --------------------------------- Konstanta -------------------------------- #
+#* ----------------------- Konstanta dan Global Variabel ---------------------- #
 BLOCK_SIZE = 20
 SPEED = 5
 Point = namedtuple('Point', 'x, y')
+point_border = BLOCK_SIZE // 5
+size_border = BLOCK_SIZE*3//5
+
 #* ---------------------------- Inisialisasi pygame --------------------------- #
 pygame.init()
 font = pygame.font.SysFont('arial', 25)
 
+#* ------------------------------- Class Pygame ------------------------------- #
 class SnakeGame:
-    def __init__(self, width=640, height=480):
+    def __init__(self, width=640, height=420):
         self.width = width
         self.height = height
         
@@ -78,18 +81,17 @@ class SnakeGame:
         self.food = Point(x, y)
 
     def _update_ui(self):
-        #* Warnain background
+        #* Warnain background dan border
         self.display.fill(Color.BACKGROUND)
+        pygame.draw.rect(self.display, Color.BORDER, pygame.Rect(0, 0, self.width-(self.width%BLOCK_SIZE), self.height-(self.height%BLOCK_SIZE)), 1)
 
         #* Gambar kepala
         pygame.draw.rect(self.display, Color.SNAKE_BORDER, pygame.Rect(self.head.x, self.head.y, BLOCK_SIZE, BLOCK_SIZE))
 
         #* Gambar badan snake
-        coor_border = BLOCK_SIZE // 5
-        size_border = BLOCK_SIZE*3//5
         for point in self.snake[1:]:
             pygame.draw.rect(self.display, Color.SNAKE_BODY, pygame.Rect(point.x, point.y, BLOCK_SIZE, BLOCK_SIZE))
-            pygame.draw.rect(self.display, Color.SNAKE_BORDER, pygame.Rect(point.x+coor_border, point.y+coor_border, size_border, size_border))
+            pygame.draw.rect(self.display, Color.SNAKE_BORDER, pygame.Rect(point.x+point_border, point.y+point_border, size_border, size_border))
         
         #* Gambar food
         pygame.draw.rect(self.display, Color.FOOD, pygame.Rect(self.food.x, self.food.y, BLOCK_SIZE, BLOCK_SIZE))
@@ -143,6 +145,7 @@ class SnakeGame:
             return True
         return False 
 
+#* -------------------------------- Main Logic -------------------------------- #
 if __name__ == '__main__':
     game = SnakeGame()
 
