@@ -1,6 +1,6 @@
 import pygame
 import random
-from librarybantuan.direction import Direction
+from librarybantuan.direction import Direction, Turn
 from librarybantuan.color import Color
 from collections import namedtuple
 
@@ -15,15 +15,19 @@ size_border = BLOCK_SIZE*3//5
 font = pygame.font.SysFont('arial', 25)
 
 #* ------------------------------- Class Pygame ------------------------------- #
-class SnakeGame:
+class SnakeGameAI:
     def __init__(self, width=640, height=420):
-        #* Init display
+        #* Init game state
         self.width = width
         self.height = height
         self.display = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption('Snake Game by Rama Bena')
         self.clock = pygame.time.Clock()
-
+        self.max_iteration = (width//BLOCK_SIZE) * (height//BLOCK_SIZE)
+        self.reset()
+        
+    #* ----------------------------- Public Class ----------------------------- #
+    def reset(self):
         #* Init snake state
         self.direction = Direction.RIGHT
         self.head = Point(((self.width//2)//BLOCK_SIZE)*BLOCK_SIZE, 
@@ -36,26 +40,33 @@ class SnakeGame:
         self.score = 0         
         self.food = None
         self._place_food()
-        
+        self.frame_iteration = 0
+
         #* Terakhir update UI
         self._update_ui()
 
-    def play_step(self):
-        #* Cek keyboard ditekan
-        self._keyboard_listener()
+    def play_step(self, action):
+        self.frame_iteration += 1
+
+        #* Cek pencet keluar
+        self._quit_listener()
 
         #* Gerak
-        self._move(self.direction)
+        self._move(action)
         self.snake.insert(0, self.head)
 
         #* Cek nabrak->game over
+        reward = 0
         game_over = False
-        if self._is_collision():
+
+        if self.is_collision() or self.frame_iteration>=self.max_iteration:
+            reward = -10
             game_over = True
-            return game_over, self.score
+            return reward, game_over, self.score
 
         #* Cek makan food atau tidak
         if self.head == self.food:
+            reward = 10
             self.score += 1
             self._place_food()
         else:
@@ -65,8 +76,21 @@ class SnakeGame:
         self._update_ui()
         self.clock.tick(SPEED)
 
-        return game_over, self.score
+        return reward, game_over, self.score
 
+    def is_collision(self, pt=None):
+        if pt is None:
+            pt = self.head
+
+        #* Nabrak sisi
+        if (pt.x>self.width-BLOCK_SIZE or pt.x<0) or (pt.y>self.height-BLOCK_SIZE or pt.y<0):
+            return True
+        #* Nabrak diri
+        if pt in self.snake[1:]:
+            return True
+        return False 
+
+    #* ----------------------------- Private Class ---------------------------- #
     def _place_food(self):
         #* Buat daftar koordinat yang tidak isi ular
         empty_space = []
@@ -101,55 +125,33 @@ class SnakeGame:
         #* Update semua
         pygame.display.flip() 
 
-    def _keyboard_listener(self):
+    def _quit_listener(self):
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:   # klik keluar
+            if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
-            if event.type == pygame.KEYDOWN: # keyboard ditekan
-                if event.key == pygame.K_LEFT:
-                    if self.direction != Direction.RIGHT:
-                        self.direction = Direction.LEFT
-                elif event.key == pygame.K_RIGHT:
-                    if self.direction != Direction.LEFT:
-                        self.direction = Direction.RIGHT
-                elif event.key == pygame.K_UP:
-                    if self.direction != Direction.DOWN:
-                        self.direction = Direction.UP
-                elif event.key == pygame.K_DOWN:
-                    if self.direction != Direction.UP:
-                        self.direction = Direction.DOWN
 
-    def _move(self, direction):
+    def _move(self, action): # ? cek tipe data action
         x = self.head.x
         y = self.head.y
-        if direction == Direction.LEFT:
+
+        clock_wise = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
+        idx = clock_wise.index(self.direction)
+
+        if action == Turn.RIGHT:
+            idx = (idx+1) % 4
+        elif action == Turn.LEFT:
+            idx = (idx-1) % 4
+        
+        self.direction = clock_wise[idx]
+
+        if self.direction == Direction.LEFT:
             x -= BLOCK_SIZE
-        elif direction == Direction.RIGHT:
+        elif self.direction == Direction.RIGHT:
             x += BLOCK_SIZE
-        elif direction == Direction.UP:
+        elif self.direction == Direction.UP:
             y -= BLOCK_SIZE
-        elif direction == Direction.DOWN:
+        elif self.direction == Direction.DOWN:
             y += BLOCK_SIZE
         
         self.head = Point(x, y)
-
-    def _is_collision(self):
-        #* Nabrak sisi
-        if (self.head.x>self.width-BLOCK_SIZE or self.head.x<0) or (self.head.y>self.height-BLOCK_SIZE or self.head.y<0):
-            return True
-        #* Nabrak diri
-        if self.head in self.snake[1:]:
-            return True
-        return False 
-
-#* ------------------------------- Fungsi Utama ------------------------------- #
-if __name__ == '__main__':
-    game = SnakeGame()
-    while True:
-        game_over, score = game.play_step()
-        if game_over:
-            break
-
-    print(f"Final Score {score}")
-    pygame.quit()
