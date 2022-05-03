@@ -3,38 +3,39 @@ import random
 from librarybantuan.direction import Direction, Turn
 from librarybantuan.color import Color
 from collections import namedtuple
-
-#* ----------------------- Konstanta dan Global Variabel ---------------------- #
-BLOCK_SIZE = 20
-SPEED = 5
-
-pygame.init()
 Point = namedtuple('Point', ['x', 'y'])
-point_border = BLOCK_SIZE // 5
-size_border = BLOCK_SIZE*3//5
-font = pygame.font.SysFont('arial', 25)
 
 #* ------------------------------- Class Pygame ------------------------------- #
 class SnakeGameAI:
-    def __init__(self, width=640, height=420):
-        #* Init game state
-        self.width = width
-        self.height = height
-        self.display = pygame.display.set_mode((self.width, self.height))
+    def __init__(self, width=640, height=420, block_size=20, speed=20):
+        #* Init Konstanta
+        self.WIDTH = width
+        self.HEIGHT = height
+        self.BLOCK_SIZE = block_size
+        self.SPEED = speed
+        self.POINT_BORDER = self.BLOCK_SIZE // 5
+        self.SIZE_BORDER = self.BLOCK_SIZE*3//5
+        self.MAX_ITERATION = (self.WIDTH//self.BLOCK_SIZE) * (self.HEIGHT//self.BLOCK_SIZE)
+
+        #* Init pygame
+        pygame.init()
+        self.FONT = pygame.font.SysFont('arial', 25)
+        self.display = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         pygame.display.set_caption('Snake Game by Rama Bena')
         self.clock = pygame.time.Clock()
-        self.max_iteration = (width//BLOCK_SIZE) * (height//BLOCK_SIZE)
+        
+        #* Init game state
         self.reset()
         
-    #* ----------------------------- Public Class ----------------------------- #
+    #* ----------------------------- Public Method ----------------------------- #
     def reset(self):
         #* Init snake state
         self.direction = Direction.RIGHT
-        self.head = Point(((self.width//2)//BLOCK_SIZE)*BLOCK_SIZE, 
-                            ((self.height//2)//BLOCK_SIZE)*BLOCK_SIZE)
+        self.head = Point(((self.WIDTH//2)//self.BLOCK_SIZE)*self.BLOCK_SIZE, 
+                            ((self.HEIGHT//2)//self.BLOCK_SIZE)*self.BLOCK_SIZE)
         self.snake = [self.head,    # Isi snake awal, kepala
-                      Point(self.head.x-BLOCK_SIZE, self.head.y),   # badan di kiri kepala
-                      Point(self.head.x-(2*BLOCK_SIZE), self.head.y)]   # badan kedua 2 kali dikiri kepala 
+                      Point(self.head.x-self.BLOCK_SIZE, self.head.y),   # badan di kiri kepala
+                      Point(self.head.x-(2*self.BLOCK_SIZE), self.head.y)]   # badan kedua 2 kali dikiri kepala 
         
         #* Init score dan food
         self.score = 0         
@@ -59,7 +60,7 @@ class SnakeGameAI:
         reward = 0
         game_over = False
 
-        if self.is_collision() or self.frame_iteration>=self.max_iteration:
+        if self.is_collision() or self.frame_iteration>=self.MAX_ITERATION:
             reward = -10
             game_over = True
             return reward, game_over, self.score
@@ -74,7 +75,7 @@ class SnakeGameAI:
 
         #* Update UI dan beri delay 
         self._update_ui()
-        self.clock.tick(SPEED)
+        self.clock.tick(self.SPEED)
 
         return reward, game_over, self.score
 
@@ -83,19 +84,19 @@ class SnakeGameAI:
             pt = self.head
 
         #* Nabrak sisi
-        if (pt.x>self.width-BLOCK_SIZE or pt.x<0) or (pt.y>self.height-BLOCK_SIZE or pt.y<0):
+        if (pt.x>self.WIDTH-self.BLOCK_SIZE or pt.x<0) or (pt.y>self.HEIGHT-self.BLOCK_SIZE or pt.y<0):
             return True
         #* Nabrak diri
         if pt in self.snake[1:]:
             return True
         return False 
 
-    #* ----------------------------- Private Class ---------------------------- #
+    #* ----------------------------- Private Method ---------------------------- #
     def _place_food(self):
         #* Buat daftar koordinat yang tidak isi ular
         empty_space = []
-        for i in range(0, self.width-BLOCK_SIZE, BLOCK_SIZE):
-            for j in range(0, self.height-BLOCK_SIZE, BLOCK_SIZE):
+        for i in range(0, self.WIDTH-self.BLOCK_SIZE, self.BLOCK_SIZE):
+            for j in range(0, self.HEIGHT-self.BLOCK_SIZE, self.BLOCK_SIZE):
                 if Point(i,j) not in self.snake:
                     empty_space.append((i, j))
         #* Pilih random tempat food
@@ -105,21 +106,21 @@ class SnakeGameAI:
     def _update_ui(self):
         #* Warnain background dan border
         self.display.fill(Color.BACKGROUND)
-        pygame.draw.rect(self.display, Color.BORDER, pygame.Rect(0, 0, self.width-(self.width%BLOCK_SIZE), self.height-(self.height%BLOCK_SIZE)), 1)
+        pygame.draw.rect(self.display, Color.BORDER, pygame.Rect(0, 0, self.WIDTH-(self.WIDTH%self.BLOCK_SIZE), self.HEIGHT-(self.HEIGHT%self.BLOCK_SIZE)), 1)
 
         #* Gambar kepala
-        pygame.draw.rect(self.display, Color.SNAKE_BORDER, pygame.Rect(self.head.x, self.head.y, BLOCK_SIZE, BLOCK_SIZE))
+        pygame.draw.rect(self.display, Color.SNAKE_BORDER, pygame.Rect(self.head.x, self.head.y, self.BLOCK_SIZE, self.BLOCK_SIZE))
 
         #* Gambar badan snake
         for point in self.snake[1:]:
-            pygame.draw.rect(self.display, Color.SNAKE_BODY, pygame.Rect(point.x, point.y, BLOCK_SIZE, BLOCK_SIZE))
-            pygame.draw.rect(self.display, Color.SNAKE_BORDER, pygame.Rect(point.x+point_border, point.y+point_border, size_border, size_border))
+            pygame.draw.rect(self.display, Color.SNAKE_BODY, pygame.Rect(point.x, point.y, self.BLOCK_SIZE, self.BLOCK_SIZE))
+            pygame.draw.rect(self.display, Color.SNAKE_BORDER, pygame.Rect(point.x+self.POINT_BORDER, point.y+self.POINT_BORDER, self.SIZE_BORDER, self.SIZE_BORDER))
         
         #* Gambar food
-        pygame.draw.rect(self.display, Color.FOOD, pygame.Rect(self.food.x, self.food.y, BLOCK_SIZE, BLOCK_SIZE))
+        pygame.draw.rect(self.display, Color.FOOD, pygame.Rect(self.food.x, self.food.y, self.BLOCK_SIZE, self.BLOCK_SIZE))
         
         #* Gambar score
-        text = font.render(f"Score: {self.score}", True, Color.SCORE)
+        text = self.FONT.render(f"Score: {self.score}", True, Color.SCORE)
         self.display.blit(text, (0, 0))
         
         #* Update semua
@@ -146,12 +147,12 @@ class SnakeGameAI:
         self.direction = clock_wise[idx]
 
         if self.direction == Direction.LEFT:
-            x -= BLOCK_SIZE
+            x -= self.BLOCK_SIZE
         elif self.direction == Direction.RIGHT:
-            x += BLOCK_SIZE
+            x += self.BLOCK_SIZE
         elif self.direction == Direction.UP:
-            y -= BLOCK_SIZE
+            y -= self.BLOCK_SIZE
         elif self.direction == Direction.DOWN:
-            y += BLOCK_SIZE
+            y += self.BLOCK_SIZE
         
         self.head = Point(x, y)
