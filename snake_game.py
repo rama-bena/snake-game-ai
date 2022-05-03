@@ -1,27 +1,25 @@
 import pygame
 import random
-from direction import Direction
-from color import Color
+from librarybantuan.direction import Direction
+from librarybantuan.color import Color
 from collections import namedtuple
 
 #* ----------------------- Konstanta dan Global Variabel ---------------------- #
 BLOCK_SIZE = 20
 SPEED = 5
-Point = namedtuple('Point', 'x, y')
+
+pygame.init()
+Point = namedtuple('Point', ['x', 'y'])
 point_border = BLOCK_SIZE // 5
 size_border = BLOCK_SIZE*3//5
-
-#* ---------------------------- Inisialisasi pygame --------------------------- #
-pygame.init()
 font = pygame.font.SysFont('arial', 25)
 
 #* ------------------------------- Class Pygame ------------------------------- #
 class SnakeGame:
     def __init__(self, width=640, height=420):
+        #* Init display
         self.width = width
         self.height = height
-        
-        #* Init display
         self.display = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption('Snake Game by Rama Bena')
         self.clock = pygame.time.Clock()
@@ -43,7 +41,7 @@ class SnakeGame:
         self._update_ui()
 
     def play_step(self):
-        #* Cek ditekan keyboard
+        #* Cek keyboard ditekan
         self._keyboard_listener()
 
         #* Gerak
@@ -63,20 +61,20 @@ class SnakeGame:
         else:
             self.snake.pop()
 
-        #* Update UI dan delay 
+        #* Update UI dan beri delay 
         self._update_ui()
         self.clock.tick(SPEED)
 
         return game_over, self.score
 
     def _place_food(self):
-        # buat daftar koordinat yang tidak isi ular
+        #* Buat daftar koordinat yang tidak isi ular
         empty_space = []
         for i in range(0, self.width-BLOCK_SIZE, BLOCK_SIZE):
             for j in range(0, self.height-BLOCK_SIZE, BLOCK_SIZE):
                 if Point(i,j) not in self.snake:
                     empty_space.append((i, j))
-        # pilih random tempat food
+        #* Pilih random tempat food
         x, y = random.choice(empty_space)
         self.food = Point(x, y)
 
@@ -138,25 +136,20 @@ class SnakeGame:
 
     def _is_collision(self):
         #* Nabrak sisi
-        if self.head.x>self.width-BLOCK_SIZE or self.head.x<0 or self.head.y>self.height-BLOCK_SIZE or self.head.y<0:
+        if (self.head.x>self.width-BLOCK_SIZE or self.head.x<0) or (self.head.y>self.height-BLOCK_SIZE or self.head.y<0):
             return True
         #* Nabrak diri
         if self.head in self.snake[1:]:
             return True
         return False 
 
-#* -------------------------------- Main Logic -------------------------------- #
+#* ------------------------------- Fungsi Utama ------------------------------- #
 if __name__ == '__main__':
     game = SnakeGame()
-
     while True:
         game_over, score = game.play_step()
-
         if game_over:
             break
 
     print(f"Final Score {score}")
     pygame.quit()
-
-
-
