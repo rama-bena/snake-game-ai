@@ -1,4 +1,3 @@
-from math import gamma
 import torch
 import random
 import numpy as np
@@ -10,12 +9,12 @@ from game import SnakeGameAI, Point
 from model import Linear_QNet, QTrainer
 
 class Agent:
-    def __init__(self, max_memory=100_000, batch_size=1000, epsilon=50, learning_rate=0.001, gamma=0.9):
+    def __init__(self, max_memory=100_000, batch_size=1000, epsilon=100, learning_rate=0.001, gamma=0.9):
         self.BATCH_SIZE = batch_size
         self.EPSILON    = epsilon # randomness exploration -> berapa persen awalnya tingkat random gerakan
         self.n_games    = 0
         self.memory     = deque(maxlen=max_memory)
-        self.model      = Linear_QNet(input_size=11, hidden_size=256, output_size=3)
+        self.model      = Linear_QNet(input_size=11, hidden_size=64, output_size=3)
         self.trainer    = QTrainer(self.model, learning_rate, gamma)
     
     #* ----------------------------- Public Method ---------------------------- #
@@ -66,7 +65,7 @@ class Agent:
             game.food.y > head.y  # food di bawah
         ]
 
-        return np.array(state, dtype=int)
+        return list(map(int, state))
 
     def get_action(self, state):
         # Random moves: tradeoff exploration / exploitation
@@ -90,15 +89,17 @@ class Agent:
         return final_move
 
     def remember(self, state, action, reward, next_state, game_over):
-        self.memory.append((state, action, reward, next_state, game_over)) # otomatis pop left jika len memory > max_memory
-    
+        if (state, action, reward, next_state, game_over) not in self.memory:
+            self.memory.append((state, action, reward, next_state, game_over)) # otomatis pop left jika len memory > max_memory
+
     def train_short_memory(self, state, action, reward, next_state, game_over):
         self.trainer.train_step(state, action, reward, next_state, game_over)
         
     def train_long_memory(self):
         # Ambil sampel dari memory sebanyak batch_size atau seluruh memory jika memory lebih kecil dari batch_size
-        mini_size = min(len(self.memory), self.BATCH_SIZE)
-        mini_sample = random.sample(self.memory, mini_size)
+        # mini_size = min(len(self.memory), self.BATCH_SIZE)
+        # mini_sample = random.sample(self.memory, mini_size)
+        mini_sample = self.memory
         
         # Ekstrak setiap paramater lalu train
         states, actions, rewards, next_states, game_overs = zip(*mini_sample)
@@ -112,23 +113,24 @@ def train():
     plot_mean_scores = []
     total_score = 0
     best_score = 0
-    game = SnakeGameAI(speed=100)
-    agent = Agent()
+    game = SnakeGameAI(speed=0)
+    agent = Agent(max_memory=1000)
 
     while True:
         # dapatkan state sekarang
         state_old = agent.get_state(game)
-
         # cari gerakan sesuai dengan state sekarang
         final_move = agent.get_action(state_old)
-
         # lakukan gerakannya dan dapatkan state hasil gerakan
-        reward, game_over, score = game.play_step(final_move)
+        try:
+            reward, game_over, caution_death, score = game.play_step(final_move)
+        except:
+            print('SELESAI BELAJAR')
+            break
         state_new = agent.get_state(game)
 
         # hasil 1 iterasi taruh di memory
         agent.remember(state_old, final_move, reward, state_new, game_over)
-        
         # latih menggunakan 1 data yang terakhir
         agent.train_short_memory(state_old, final_move, reward, state_new, game_over)
 
@@ -141,14 +143,13 @@ def train():
                 best_score = score
                 agent.model.save()
 
-            print(f"Game: {agent.n_games}, Score:{score}, Best score:{best_score}")
+            print(f"Game: {agent.n_games}, Score:{score}, Best score:{best_score}, Caution Death:{caution_death}")
 
             plot_scores.append(score)
             total_score += score
             mean_score = total_score / agent.n_games
             plot_mean_scores.append(mean_score)
-
-            # plot(plot_scores, plot_mean_scores)
+            plot(plot_scores, plot_mean_scores)
             
 
 if __name__ == '__main__':

@@ -49,6 +49,8 @@ class SnakeGameAI:
 
     def play_step(self, action):
         self.frame_iteration += 1
+        caution_death = 'not die'
+        distance_before_move = self._distance(self.head, self.food)
 
         #* Cek pencet keluar
         self._quit_listener()
@@ -56,20 +58,29 @@ class SnakeGameAI:
         #* Gerak
         self._move(action)
         self.snake.insert(0, self.head)
+        distance_after_move = self._distance(self.head, self.food)
 
         #* Cek nabrak->game over
-        reward = self._init_reward()
+        # reward = distance_before_move - distance_after_move
+        reward = 0
         game_over = False
 
-        if self.is_collision() or self.frame_iteration>=self.MAX_ITERATION:
+        if self.is_collision() or self.frame_iteration > len(self.snake)*100:
             reward = -10
             game_over = True
-            return reward, game_over, self.score
+            if self.head in self.snake[1:]:
+                caution_death = 'nabrak diri'
+            elif self.frame_iteration > len(self.snake)*100:
+                caution_death = 'iterasi'
+            else:
+                caution_death = 'nabrak tembok'            
+            return reward, game_over, caution_death, self.score
 
         #* Cek makan food atau tidak
         if self.head == self.food:
-            reward = 100
+            reward = 10
             self.score += 1
+            self.frame_iteration = 0
             self._place_food()
         else:
             self.snake.pop()
@@ -78,19 +89,15 @@ class SnakeGameAI:
         self._update_ui()
         self.clock.tick(self.SPEED)
 
-        return reward, game_over, self.score
+        return reward, game_over, caution_death, self.score
 
     def is_collision(self, pt=None):
         if pt is None:
             pt = self.head
 
-        #* Nabrak sisi
-        if (pt.x>self.WIDTH-self.BLOCK_SIZE or pt.x<0) or (pt.y>self.HEIGHT-self.BLOCK_SIZE or pt.y<0):
-            return True
-        #* Nabrak diri
-        if pt in self.snake[1:]:
-            return True
-        return False 
+        hits_boundary = (pt.x>self.WIDTH-self.BLOCK_SIZE or pt.x<0) or (pt.y>self.HEIGHT-self.BLOCK_SIZE or pt.y<0)
+        hits_itself = pt in self.snake[1:]
+        return hits_boundary or hits_itself
 
     #* ----------------------------- Private Method ---------------------------- #
     def _place_food(self):
@@ -131,7 +138,6 @@ class SnakeGameAI:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                quit()
 
     def _move(self, action): # ? cek tipe data action
         x = self.head.x
@@ -160,8 +166,3 @@ class SnakeGameAI:
 
     def _distance(self, point1, point2):
         return (abs(point1.x-point2.x) + abs(point1.y-point2.y)) // self.BLOCK_SIZE
-
-    def _init_reward(self):
-        max_distance = (self.WIDTH//self.BLOCK_SIZE) + (self.HEIGHT//self.BLOCK_SIZE)
-        distance = self._distance(self.head, self.food)
-        return (max_distance-distance) / max_distance

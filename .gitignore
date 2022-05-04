@@ -1,10 +1,13 @@
+# customize
+coba.ipynb
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 
-# C extensions
-*.so
+# vs code
+.vscode
 
 # Distribution / packaging
 .Python
