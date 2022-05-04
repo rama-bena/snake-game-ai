@@ -1,23 +1,22 @@
+from math import gamma
 import torch
 import random
 import numpy as np
 from collections import deque
 
-from game import SnakeGameAI, Point
 from librarybantuan.direction import Direction, Turn
-
+from librarybantuan.plot import plot
+from game import SnakeGameAI, Point
+from model import Linear_QNet, QTrainer
 
 class Agent:
-    def __init__(self, max_memory=100_000, batch_size=1000, learning_rate=0.001, epsilon=50):
+    def __init__(self, max_memory=100_000, batch_size=1000, epsilon=50, learning_rate=0.001, gamma=0.9):
         self.BATCH_SIZE = batch_size
-        self.LR         = learning_rate
         self.EPSILON    = epsilon # randomness exploration -> berapa persen awalnya tingkat random gerakan
-        self.gamma      = 0 # discount rate
         self.n_games    = 0
         self.memory     = deque(maxlen=max_memory)
-        self.model      = None # TODO
-        self.trainer    = None # TODO
-
+        self.model      = Linear_QNet(input_size=11, hidden_size=256, output_size=3)
+        self.trainer    = QTrainer(self.model, learning_rate, gamma)
     
     #* ----------------------------- Public Method ---------------------------- #
     def get_state(self, game:SnakeGameAI): #? ubah menjadi fungsi?
@@ -105,9 +104,6 @@ class Agent:
         states, actions, rewards, next_states, game_overs = zip(*mini_sample)
         self.trainer.train_step(states, actions, rewards, next_states, game_overs)
 
-
-
-
     #* ---------------------------- Private Method ---------------------------- #
 
 #* ------------------------------- Main Function ------------------------------ #
@@ -116,8 +112,8 @@ def train():
     plot_mean_scores = []
     total_score = 0
     best_score = 0
+    game = SnakeGameAI(speed=50)
     agent = Agent()
-    game = SnakeGameAI()
 
     while True:
         # dapatkan state sekarang
@@ -143,11 +139,16 @@ def train():
 
             if score > best_score:
                 best_score = score
-                # agen.model.save()
+                agent.model.save()
 
             print(f"Game: {agent.n_games}, Score:{score}, Best score:{best_score}")
-            
-            # TODO: plot
+
+            plot_scores.append(score)
+            total_score += score
+            mean_score = total_score / agent.n_games
+            plot_mean_scores.append(mean_score)
+
+            # plot(plot_scores, plot_mean_scores)
             
 
 if __name__ == '__main__':

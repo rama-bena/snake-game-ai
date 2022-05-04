@@ -15,7 +15,8 @@ class SnakeGameAI:
         self.SPEED = speed
         self.POINT_BORDER = self.BLOCK_SIZE // 5
         self.SIZE_BORDER = self.BLOCK_SIZE*3//5
-        self.MAX_ITERATION = (self.WIDTH//self.BLOCK_SIZE) * (self.HEIGHT//self.BLOCK_SIZE)
+        # self.MAX_ITERATION = (self.WIDTH//self.BLOCK_SIZE) * (self.HEIGHT//self.BLOCK_SIZE)
+        self.MAX_ITERATION = 200
 
         #* Init pygame
         pygame.init()
