@@ -112,7 +112,7 @@ def train():
     plot_mean_scores = []
     total_score = 0
     best_score = 0
-    game = SnakeGameAI(speed=50)
+    game = SnakeGameAI(speed=100)
     agent = Agent()
 
     while True:

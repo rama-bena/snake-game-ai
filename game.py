@@ -58,7 +58,7 @@ class SnakeGameAI:
         self.snake.insert(0, self.head)
 
         #* Cek nabrak->game over
-        reward = 0
+        reward = self._init_reward()
         game_over = False
 
         if self.is_collision() or self.frame_iteration>=self.MAX_ITERATION:
@@ -68,7 +68,7 @@ class SnakeGameAI:
 
         #* Cek makan food atau tidak
         if self.head == self.food:
-            reward = 10
+            reward = 100
             self.score += 1
             self._place_food()
         else:
@@ -157,3 +157,11 @@ class SnakeGameAI:
             y += self.BLOCK_SIZE
         
         self.head = Point(x, y)
+
+    def _distance(self, point1, point2):
+        return (abs(point1.x-point2.x) + abs(point1.y-point2.y)) // self.BLOCK_SIZE
+
+    def _init_reward(self):
+        max_distance = (self.WIDTH//self.BLOCK_SIZE) + (self.HEIGHT//self.BLOCK_SIZE)
+        distance = self._distance(self.head, self.food)
+        return (max_distance-distance) / max_distance
