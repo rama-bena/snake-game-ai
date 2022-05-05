@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import random
 from collections import deque
@@ -10,60 +11,49 @@ class Agent:
     def __init__(self, max_memory=100_000, batch_size=1000, epsilon=100, learning_rate=0.001, gamma=0.9):
         self.BATCH_SIZE = batch_size
         self.epsilon    = epsilon # randomness exploration -> berapa persen awalnya tingkat random gerakan
-        self.n_games    = 0
         self.memory     = deque(maxlen=max_memory) # otomatis pop left jika len memory > max_memory
-        self.model      = Linear_QNet(input_size=11, hidden_size=64, output_size=3)
+        self.n_games    = 0
+        self.model      = Linear_QNet(input_size=87, hidden_size=64, output_size=3)
         self.trainer    = QTrainer(self.model, learning_rate, gamma)
     
     #* ----------------------------- Public Method ---------------------------- #
     def get_state(self, game:SnakeGameAI): #? ubah menjadi beberapa fungsi?
-        head = game.head
+        def point_to_index(point:Point, block_size): # Fungsi bantuan mengubah point menjadi index
+            return (point.y//block_size, point.x//block_size)
+
+        #* Ambil atribut yang dibutuhkan
+        snake = game.snake
+        head = snake[0]
+        food = game.food
         direction = game.direction
+        block_size = game.BLOCK_SIZE
 
-        point_l = Point(head.x-game.BLOCK_SIZE, head.y)
-        point_r = Point(head.x+game.BLOCK_SIZE, head.y)
-        point_u = Point(head.x, head.y-game.BLOCK_SIZE)
-        point_d = Point(head.x, head.y+game.BLOCK_SIZE)
+        #* Buat state obstacle 9x9, 1:ada obstacle, 0:tidak ada
+        state_obstacles = [[0 for _ in range(9)] for __ in range(9)]
+        titik_awal = Point(head.x-4*block_size, head.y-4*block_size)
+        kurang = point_to_index(titik_awal, block_size)
+        for i in range(9):
+            for j in range(9):
+                point = Point(titik_awal.x + j*block_size, titik_awal.y + i*block_size)
+                if game.is_collision(point) or point==head:
+                    idx = point_to_index(point, block_size)
+                    idx = (idx[0]-kurang[0], idx[1]-kurang[1])
+                    state_obstacles[idx[0]][idx[1]] = 1
+        #* Buat 1 dimensi
+        state_obstacles = list(np.array(state_obstacles).reshape(1, -1)[0]) 
 
-        dir_l = direction==Direction.LEFT
-        dir_r = direction==Direction.RIGHT
-        dir_u = direction==Direction.UP
-        dir_d = direction==Direction.DOWN
+        #* Direction
+        dir_l = game.direction == Direction.LEFT
+        dir_r = game.direction == Direction.RIGHT
+        dir_u = game.direction == Direction.UP
+        dir_d = game.direction == Direction.DOWN
+        state_direction = [dir_l, dir_r, dir_u, dir_d]
 
-
-        state = [
-            # Danger straight
-            (dir_l and game.is_collision(point_l)) or 
-            (dir_r and game.is_collision(point_r)) or 
-            (dir_u and game.is_collision(point_u)) or 
-            (dir_d and game.is_collision(point_d)), 
-
-            # Danger Right
-            (dir_l and game.is_collision(point_u)) or 
-            (dir_r and game.is_collision(point_d)) or 
-            (dir_u and game.is_collision(point_r)) or 
-            (dir_d and game.is_collision(point_l)),
-
-            # Danger Left
-            (dir_l and game.is_collision(point_d)) or 
-            (dir_r and game.is_collision(point_u)) or 
-            (dir_u and game.is_collision(point_l)) or 
-            (dir_d and game.is_collision(point_r)),
-
-            # Move Direction
-            dir_l,
-            dir_r,
-            dir_u,
-            dir_d,
-
-            # Food location
-            game.food.x < head.x, # food di kiri
-            game.food.x > head.x, # food di kanan
-            game.food.y < head.y, # food di atas
-            game.food.y > head.y  # food di bawah
-        ]
-
-        return list(map(int, state))
+        #* Buat state food berdasarkan jarak manhattan food dengan head
+        state_food = [(food.x-head.x)//block_size, (food.y-head.y)//block_size]
+        
+        #* gabungkan ketiga state(81 + 4 + 2 element) dan return
+        return state_obstacles + state_direction + state_food
 
     def get_action(self, state):
         # Random moves: tradeoff exploration / exploitation
@@ -95,9 +85,9 @@ class Agent:
         
     def train_long_memory(self):
         ## Ambil sampel dari memory sebanyak batch_size atau seluruh memory jika memory lebih kecil dari batch_size
-        # mini_size = min(len(self.memory), self.BATCH_SIZE)
-        # mini_sample = random.sample(self.memory, mini_size)
-        mini_sample = self.memory #? gak pakek batch. Kode diatas pakai batch
+        mini_size = min(len(self.memory), self.BATCH_SIZE)
+        mini_sample = random.sample(self.memory, mini_size)
+        # mini_sample = self.memory # gak pakek batch. Kode diatas pakai batch
         
         # Ekstrak setiap paramater lalu train
         states, actions, rewards, next_states, game_overs = zip(*mini_sample)
