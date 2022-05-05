@@ -1,24 +1,22 @@
 import torch
 import random
-import numpy as np
 from collections import deque
 
-from librarybantuan.direction import Direction, Turn
-from librarybantuan.plot import plot
+from librarybantuan.direction import Direction
 from game import SnakeGameAI, Point
 from model import Linear_QNet, QTrainer
 
 class Agent:
     def __init__(self, max_memory=100_000, batch_size=1000, epsilon=100, learning_rate=0.001, gamma=0.9):
         self.BATCH_SIZE = batch_size
-        self.EPSILON    = epsilon # randomness exploration -> berapa persen awalnya tingkat random gerakan
+        self.epsilon    = epsilon # randomness exploration -> berapa persen awalnya tingkat random gerakan
         self.n_games    = 0
-        self.memory     = deque(maxlen=max_memory)
+        self.memory     = deque(maxlen=max_memory) # otomatis pop left jika len memory > max_memory
         self.model      = Linear_QNet(input_size=11, hidden_size=64, output_size=3)
         self.trainer    = QTrainer(self.model, learning_rate, gamma)
     
     #* ----------------------------- Public Method ---------------------------- #
-    def get_state(self, game:SnakeGameAI): #? ubah menjadi fungsi?
+    def get_state(self, game:SnakeGameAI): #? ubah menjadi beberapa fungsi?
         head = game.head
         direction = game.direction
 
@@ -69,7 +67,7 @@ class Agent:
 
     def get_action(self, state):
         # Random moves: tradeoff exploration / exploitation
-        new_epsilon =  self.EPSILON - self.n_games # epsilon semakin lama semakin kecil -> semakin sedikit random gerakan
+        new_epsilon = self.epsilon-self.n_games # epsilon semakin lama semakin kecil -> semakin sedikit random gerakan
         # OHE dari move = [straight, turn_right, turn_left]
         final_move = [0, 0, 0]
 
@@ -79,78 +77,30 @@ class Agent:
             final_move[move] = 1
         else:
             # Jadikan bentuk tensor dulu statenya
-            state0 = torch.tensor(state, dtype=torch.float)
-            # Lakukan prediksi gerakan, hasil masih berupa one hot encoding
-            prediction = self.model(state0)
-            # Ubah OHE ke bentuk index
+            state = torch.tensor(state, dtype=torch.float)
+            # Lakukan prediksi gerakan
+            prediction = self.model(state)
+            # Ambil gerakan yang nilainya paling tinggi
             move = torch.argmax(prediction).item()
             final_move[move] = 1
 
         return final_move
 
     def remember(self, state, action, reward, next_state, game_over):
-        if (state, action, reward, next_state, game_over) not in self.memory:
-            self.memory.append((state, action, reward, next_state, game_over)) # otomatis pop left jika len memory > max_memory
+        if (state, action, reward, next_state, game_over) not in self.memory: # hanya masukin data yang tidak ada di memory
+            self.memory.append((state, action, reward, next_state, game_over)) 
 
     def train_short_memory(self, state, action, reward, next_state, game_over):
         self.trainer.train_step(state, action, reward, next_state, game_over)
         
     def train_long_memory(self):
-        # Ambil sampel dari memory sebanyak batch_size atau seluruh memory jika memory lebih kecil dari batch_size
+        ## Ambil sampel dari memory sebanyak batch_size atau seluruh memory jika memory lebih kecil dari batch_size
         # mini_size = min(len(self.memory), self.BATCH_SIZE)
         # mini_sample = random.sample(self.memory, mini_size)
-        mini_sample = self.memory
+        mini_sample = self.memory #? gak pakek batch. Kode diatas pakai batch
         
         # Ekstrak setiap paramater lalu train
         states, actions, rewards, next_states, game_overs = zip(*mini_sample)
         self.trainer.train_step(states, actions, rewards, next_states, game_overs)
 
     #* ---------------------------- Private Method ---------------------------- #
-
-#* ------------------------------- Main Function ------------------------------ #
-def train():
-    plot_scores = []
-    plot_mean_scores = []
-    total_score = 0
-    best_score = 0
-    game = SnakeGameAI(speed=0)
-    agent = Agent(max_memory=1000)
-
-    while True:
-        # dapatkan state sekarang
-        state_old = agent.get_state(game)
-        # cari gerakan sesuai dengan state sekarang
-        final_move = agent.get_action(state_old)
-        # lakukan gerakannya dan dapatkan state hasil gerakan
-        try:
-            reward, game_over, caution_death, score = game.play_step(final_move)
-        except:
-            print('SELESAI BELAJAR')
-            break
-        state_new = agent.get_state(game)
-
-        # hasil 1 iterasi taruh di memory
-        agent.remember(state_old, final_move, reward, state_new, game_over)
-        # latih menggunakan 1 data yang terakhir
-        agent.train_short_memory(state_old, final_move, reward, state_new, game_over)
-
-        if game_over:
-            game.reset()
-            agent.n_games += 1
-            agent.train_long_memory() # latih menggunakan data-data di memori
-
-            if score > best_score:
-                best_score = score
-                agent.model.save()
-
-            print(f"Game: {agent.n_games}, Score:{score}, Best score:{best_score}, Caution Death:{caution_death}")
-
-            plot_scores.append(score)
-            total_score += score
-            mean_score = total_score / agent.n_games
-            plot_mean_scores.append(mean_score)
-            plot(plot_scores, plot_mean_scores)
-            
-
-if __name__ == '__main__':
-    train()

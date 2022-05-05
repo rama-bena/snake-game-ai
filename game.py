@@ -5,22 +5,20 @@ from librarybantuan.color import Color
 from collections import namedtuple
 Point = namedtuple('Point', ['x', 'y'])
 
-#* ------------------------------- Class Pygame ------------------------------- #
 class SnakeGameAI:
     def __init__(self, width=640, height=420, block_size=20, speed=20):
         #* Init Konstanta
-        self.WIDTH = width
-        self.HEIGHT = height
-        self.BLOCK_SIZE = block_size
-        self.SPEED = speed
-        self.POINT_BORDER = self.BLOCK_SIZE // 5
-        self.SIZE_BORDER = self.BLOCK_SIZE*3//5
-        # self.MAX_ITERATION = (self.WIDTH//self.BLOCK_SIZE) * (self.HEIGHT//self.BLOCK_SIZE)
-        self.MAX_ITERATION = 200
+        self.WIDTH         = width
+        self.HEIGHT        = height
+        self.BLOCK_SIZE    = block_size
+        self.SPEED         = speed
+        self.POINT_BORDER  = self.BLOCK_SIZE // 5
+        self.SIZE_BORDER   = self.BLOCK_SIZE*3//5
+        self.MAX_ITERATION = (self.WIDTH//self.BLOCK_SIZE) * (self.HEIGHT//self.BLOCK_SIZE) # sesuai dengan banyaknya block yang ada
 
         #* Init pygame
         pygame.init()
-        self.FONT = pygame.font.SysFont('arial', 25)
+        self.font = pygame.font.SysFont('arial', 25)
         self.display = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         pygame.display.set_caption('Snake Game by Rama Bena')
         self.clock = pygame.time.Clock()
@@ -30,13 +28,17 @@ class SnakeGameAI:
         
     #* ----------------------------- Public Method ----------------------------- #
     def reset(self):
+        """ Untuk me-reset semua variabel game ke awal
+            Dipakai ketika pertama kali main atau tiap mati mau ulang game
+        """        
+        
         #* Init snake state
         self.direction = Direction.RIGHT
         self.head = Point(((self.WIDTH//2)//self.BLOCK_SIZE)*self.BLOCK_SIZE, 
                             ((self.HEIGHT//2)//self.BLOCK_SIZE)*self.BLOCK_SIZE)
-        self.snake = [self.head,    # Isi snake awal, kepala
-                      Point(self.head.x-self.BLOCK_SIZE, self.head.y),   # badan di kiri kepala
-                      Point(self.head.x-(2*self.BLOCK_SIZE), self.head.y)]   # badan kedua 2 kali dikiri kepala 
+        self.snake = [self.head,                                            # Isi snake awal yaitu kepala
+                      Point(self.head.x-self.BLOCK_SIZE, self.head.y),      # badan pertama di kiri kepala
+                      Point(self.head.x-(2*self.BLOCK_SIZE), self.head.y)]  # badan kedua 2 kali di kiri kepala 
         
         #* Init score dan food
         self.score = 0         
@@ -48,9 +50,20 @@ class SnakeGameAI:
         self._update_ui()
 
     def play_step(self, action):
-        self.frame_iteration += 1
+        """`Description`:
+            Fungsi utama untuk menjalankan ular sesuai dengan action
+        `Args`:
+            action ([straight, turn_right, turn_left]): Arah gerakan
+        `Returns`:
+            (reward, game_over, caution_death, self.score): bentuk tuple dengan 4 element 
+        """        
+        
+        #* Init variabel
+        reward        = 0
+        game_over     = False
         caution_death = 'not die'
-        distance_before_move = self._distance(self.head, self.food)
+        # distance_before_move = self._distance(self.head, self.food)
+        self.frame_iteration += 1
 
         #* Cek pencet keluar
         self._quit_listener()
@@ -58,22 +71,20 @@ class SnakeGameAI:
         #* Gerak
         self._move(action)
         self.snake.insert(0, self.head)
-        distance_after_move = self._distance(self.head, self.food)
-
-        #* Cek nabrak->game over
+        # distance_after_move = self._distance(self.head, self.food)
         # reward = distance_before_move - distance_after_move
-        reward = 0
-        game_over = False
 
-        if self.is_collision() or self.frame_iteration > len(self.snake)*100:
+        #* Cek Game Over
+        if self.is_collision():
             reward = -10
             game_over = True
-            if self.head in self.snake[1:]:
-                caution_death = 'nabrak diri'
-            elif self.frame_iteration > len(self.snake)*100:
-                caution_death = 'iterasi'
-            else:
-                caution_death = 'nabrak tembok'            
+            caution_death = 'nabrak diri' if self.head in self.snake[1:] else 'nabrak tembok'
+            return reward, game_over, caution_death, self.score
+
+        if self.frame_iteration > self.MAX_ITERATION:
+            reward = -10
+            game_over = True
+            caution_death = 'lama gak makan'
             return reward, game_over, caution_death, self.score
 
         #* Cek makan food atau tidak
@@ -92,6 +103,13 @@ class SnakeGameAI:
         return reward, game_over, caution_death, self.score
 
     def is_collision(self, pt=None):
+        """`Description`:
+            Cek apakah nabrak (tembok/diri)
+        `Args`:
+            pt (Point, optional): Point apa yang di cek. Defaultnya head.
+        `Returns`:
+            bool
+        """        
         if pt is None:
             pt = self.head
 
@@ -112,7 +130,7 @@ class SnakeGameAI:
         self.food = Point(x, y)
 
     def _update_ui(self):
-        #* Warnain background dan border
+        #* Warnain background dan border display
         self.display.fill(Color.BACKGROUND)
         pygame.draw.rect(self.display, Color.BORDER, pygame.Rect(0, 0, self.WIDTH-(self.WIDTH%self.BLOCK_SIZE), self.HEIGHT-(self.HEIGHT%self.BLOCK_SIZE)), 1)
 
@@ -128,7 +146,7 @@ class SnakeGameAI:
         pygame.draw.rect(self.display, Color.FOOD, pygame.Rect(self.food.x, self.food.y, self.BLOCK_SIZE, self.BLOCK_SIZE))
         
         #* Gambar score
-        text = self.FONT.render(f"Score: {self.score}", True, Color.SCORE)
+        text = self.font.render(f"Score: {self.score}", True, Color.SCORE)
         self.display.blit(text, (0, 0))
         
         #* Update semua
@@ -165,4 +183,5 @@ class SnakeGameAI:
         self.head = Point(x, y)
 
     def _distance(self, point1, point2):
+        # Manhattan Distance 2 point        
         return (abs(point1.x-point2.x) + abs(point1.y-point2.y)) // self.BLOCK_SIZE

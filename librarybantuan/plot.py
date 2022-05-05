@@ -1,32 +1,33 @@
+import numpy as np
 import matplotlib.pyplot as plt
 from IPython import display
 
 plt.ion()
 
-def plot(scores, mean_scores):
+def plot(scores, degree=5, iterative=True):
     display.clear_output(wait=True)
     display.display(plt.gcf())
     plt.clf()
-    plt.title('Training saya')
+    plt.title('Training...')
     plt.xlabel('Number of Games')
     plt.ylabel('Score')
-    plt.plot(scores)
-    plt.plot(mean_scores)
+
+    x_list = np.arange(len(scores))
+    plt.plot(x_list, scores)
+    fit = np.polyfit(x_list, scores, degree)
+    y_list = []    
+    for x in x_list:
+        y = np.sum([fit[i]*(x**(degree-i)) for i in range(degree+1)])
+        y_list.append(y)
+
+    plt.plot(x_list, y_list)
+    
     plt.ylim(ymin=0)
     plt.text(len(scores)-1, scores[-1], str(scores[-1]))
-    plt.text(len(mean_scores)-1, mean_scores[-1], str(mean_scores[-1]))
-    plt.show(block=False)
-    plt.pause(.1)
-
-# import random
-
-# scores = []
-# mean_scores = []
-# total = 0
-
-# for _ in range(10):
-#     scores.append(random.randint(1, 10))
-#     total += scores[-1]
-#     mean_scores.append(total/len(scores))
-
-# plot(scores, mean_scores)
+    plt.text(len(y_list)-1, y_list[-1], str(y_list[-1]))
+    
+    if iterative:
+        plt.show(block=False)
+        plt.pause(.1)
+    else:
+        plt.show()

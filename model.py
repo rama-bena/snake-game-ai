@@ -5,6 +5,13 @@ import torch.nn.functional as F
 import os
 
 class Linear_QNet(nn.Module):
+    """ Arsitektur Neural Network
+            1. FeedForward dari input layer ke hidden layer
+            2. Aktivasi Relu
+            3. FeedForward dari hidden layer ke output layer
+            !tidak ada aktivasi di output layer 
+    """    
+   
     def __init__(self, input_size, hidden_size, output_size):
         super().__init__()
         self.linear1 = nn.Linear(input_size, hidden_size)
@@ -33,36 +40,36 @@ class QTrainer:
         self.criterion = nn.MSELoss()
     
     def train_step(self, state, action, reward, next_state, game_over):
-        # jadikan bentuk tensor
+        #* jadikan bentuk tensor
         state = torch.tensor(state, dtype=torch.float)
         action = torch.tensor(action, dtype=torch.long)
         reward = torch.tensor(reward, dtype=torch.float)
         next_state = torch.tensor(next_state, dtype=torch.float)
 
-        if len(state.shape) == 1: # jika 1 dimensi
-            # ubah jadi bentuk (1, x)
+        #* jika 1 dimensi ubah dulu jadi bentuk (1, x) 
+        if len(state.shape) == 1:
             state = torch.unsqueeze(state, 0)
             action = torch.unsqueeze(action, 0)
             reward = torch.unsqueeze(reward, 0)
             next_state = torch.unsqueeze(next_state, 0)
             game_over = (game_over, )
 
-        # 1: Prediksi Q values dengan state sekarang
+        #* Prediksi Q values dengan setiap state awal
         prediction = self.model(state) 
-        # sementara copy dulu dari prediction
-        target = prediction.clone()
+        target = prediction.clone() # sementara copy dulu dari prediction biar shape nya sama
 
-        size = len(state)
-        for idx in range(size):
-            Q_new = reward[idx]
-            if not game_over[idx]:
-                # 2: Q_new = r + y*max(prediksi berikutnya Q value)
+        #* Untuk setiap data cari nilai targetnya (Q_new) 
+        for idx in range(len(state)):
+            if game_over[idx]:
+                Q_new = reward[idx]
+            else:
+                #* Q_new = r + y*max(prediksi berikutnya Q value) 
                 Q_new = reward[idx] + self.gamma * torch.max(self.model(next_state[idx]))
 
             action_idx = torch.argmax(action[idx]).item() 
             target[idx][action_idx] = Q_new 
 
-        # kosongkan dulu gradian sebelumnya
+        # kosongkan dulu gradien sebelumnya
         self.optimizer.zero_grad()
         # cari nilai loss
         loss = self.criterion(target, prediction)
