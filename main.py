@@ -11,7 +11,7 @@ def main():
     #* Argumen
     width      = 640
     height     = 480
-    speed      = 0      # semakin tinggi semakin cepet, khusus 0 paling cepet
+    speed      = 40      # semakin tinggi semakin cepet, khusus 0 paling cepet
     epsilon    = 100
     max_memory = 100_000
 
@@ -24,9 +24,11 @@ def main():
         state_old = agent.get_state(game)
         # cari gerakan sesuai dengan state sekarang
         action = agent.get_action(state_old)
+        # no_ui = agent.n_games < 100
+        no_ui = False
         try:
             # lakukan gerakannya
-            reward, game_over, caution_death, score = game.play_step(action)
+            reward, game_over, caution_death, score = game.play_step(action, no_ui)
         except:
             print('SELESAI BELAJAR')
             break
@@ -39,18 +41,15 @@ def main():
         agent.train_short_memory(state_old, action, reward, state_new, game_over)
 
         if game_over:
+            scores.append(score)
+            plot(scores, degree=4)
             game.reset()
             agent.n_games += 1
-            agent.train_long_memory() # latih menggunakan data-data di memori
-
             if score > best_score:
                 best_score = score
                 agent.model.save()
-
             print(f"Game: {agent.n_games}, Score:{score}, Best score:{best_score}, Caution Death:{caution_death}")
-
-            scores.append(score)
-            plot(scores, degree=3)
+            agent.train_long_memory() # latih menggunakan data-data di memori
 
     plot(scores, iterative=False)
             

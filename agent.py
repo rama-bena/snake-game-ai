@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import random
 from collections import deque
+import itertools
 
 from librarybantuan.direction import Direction
 from game import SnakeGameAI, Point
@@ -13,47 +14,15 @@ class Agent:
         self.epsilon    = epsilon # randomness exploration -> berapa persen awalnya tingkat random gerakan
         self.memory     = deque(maxlen=max_memory) # otomatis pop left jika len memory > max_memory
         self.n_games    = 0
-        self.model      = Linear_QNet(input_size=87, hidden_size=64, output_size=3)
+        self.model      = Linear_QNet(input_size=85, hidden_size=256, output_size=3)
         self.trainer    = QTrainer(self.model, learning_rate, gamma)
     
     #* ----------------------------- Public Method ---------------------------- #
-    def get_state(self, game:SnakeGameAI): #? ubah menjadi beberapa fungsi?
-        def point_to_index(point:Point, block_size): # Fungsi bantuan mengubah point menjadi index
-            return (point.y//block_size, point.x//block_size)
-
-        #* Ambil atribut yang dibutuhkan
-        snake = game.snake
-        head = snake[0]
-        food = game.food
-        direction = game.direction
-        block_size = game.BLOCK_SIZE
-
-        #* Buat state obstacle 9x9, 1:ada obstacle, 0:tidak ada
-        state_obstacles = [[0 for _ in range(9)] for __ in range(9)]
-        titik_awal = Point(head.x-4*block_size, head.y-4*block_size)
-        kurang = point_to_index(titik_awal, block_size)
-        for i in range(9):
-            for j in range(9):
-                point = Point(titik_awal.x + j*block_size, titik_awal.y + i*block_size)
-                if game.is_collision(point) or point==head:
-                    idx = point_to_index(point, block_size)
-                    idx = (idx[0]-kurang[0], idx[1]-kurang[1])
-                    state_obstacles[idx[0]][idx[1]] = 1
-        #* Buat 1 dimensi
-        state_obstacles = list(np.array(state_obstacles).reshape(1, -1)[0]) 
-
-        #* Direction
-        dir_l = game.direction == Direction.LEFT
-        dir_r = game.direction == Direction.RIGHT
-        dir_u = game.direction == Direction.UP
-        dir_d = game.direction == Direction.DOWN
-        state_direction = [dir_l, dir_r, dir_u, dir_d]
-
-        #* Buat state food berdasarkan jarak manhattan food dengan head
-        state_food = [(food.x-head.x)//block_size, (food.y-head.y)//block_size]
-        
-        #* gabungkan ketiga state(81 + 4 + 2 element) dan return
-        return state_obstacles + state_direction + state_food
+    def get_state(self, game:SnakeGameAI):
+        state_obstacles = self._get_state_obstacles(game)
+        state_food = self._get_state_food(game.head, game.food, game.direction)
+        final_state = state_obstacles + state_food
+        return final_state
 
     def get_action(self, state):
         # Random moves: tradeoff exploration / exploitation
@@ -85,12 +54,74 @@ class Agent:
         
     def train_long_memory(self):
         ## Ambil sampel dari memory sebanyak batch_size atau seluruh memory jika memory lebih kecil dari batch_size
-        mini_size = min(len(self.memory), self.BATCH_SIZE)
-        mini_sample = random.sample(self.memory, mini_size)
+        # mini_size = min(len(self.memory), self.BATCH_SIZE)
+        # mini_sample = random.sample(self.memory, mini_size)
         # mini_sample = self.memory # gak pakek batch. Kode diatas pakai batch
-        
+        if len(self.memory) < 5000:
+            mini_sample = self.memory
+        else:
+            mini_sample = list(itertools.islice(self.memory, len(self.memory)-5000, len(self.memory)))
+
         # Ekstrak setiap paramater lalu train
         states, actions, rewards, next_states, game_overs = zip(*mini_sample)
         self.trainer.train_step(states, actions, rewards, next_states, game_overs)
 
     #* ---------------------------- Private Method ---------------------------- #
+    def _get_state_food(self, head, food, direction):
+        initial_state = [
+            1 if food.y < head.y else 0,  # food ada di atas
+            1 if food.x > head.x else 0,  # food ada di kanan
+            1 if food.y > head.y else 0,  # food ada di bawah
+            1 if food.x < head.x else 0  # food ada di kiri
+        ]
+
+        if direction == Direction.UP:
+            how_many_turn_right = 0
+        elif direction == Direction.RIGHT:
+            how_many_turn_right = 1
+        elif direction == Direction.DOWN:
+            how_many_turn_right = 2
+        else:
+            how_many_turn_right = 3
+
+        state_food = [initial_state[(i+how_many_turn_right)%4] for i in range(4)]
+        return state_food
+   
+    def _get_state_obstacles(self, game:SnakeGameAI):
+        def point_to_index(point:Point, block_size): # Fungsi bantuan mengubah point menjadi index
+            return (point.y//block_size, point.x//block_size)
+
+        def rotate_state(state, direction):
+            if direction == Direction.UP:
+                return state
+            elif direction == Direction.LEFT:
+                return list(zip(*state[::-1])) # putar clockwise
+            elif direction == Direction.RIGHT:
+                return list(zip(*state))[::-1] # putar counter clockwise
+            else:
+                return list(zip(*list(zip(*state[::-1]))[::-1])) # putar 2 kali
+
+        #* Ambil atribut yang dibutuhkan
+        snake = game.snake
+        head = snake[0]
+        direction = game.direction
+        block_size = game.BLOCK_SIZE
+
+        #* Buat state obstacle, 1:ada obstacle, 0:tidak ada
+        visual_range = 9
+        state_obstacles = [[0 for _ in range(visual_range)] for __ in range(visual_range)]
+        titik_awal = Point(head.x-(visual_range//2)*block_size, head.y-(visual_range//2)*block_size)
+        kurang = point_to_index(titik_awal, block_size)
+        for i in range(visual_range):
+            for j in range(visual_range):
+                point = Point(titik_awal.x + j*block_size, titik_awal.y + i*block_size)
+                if game.is_collision(point) or point==head:
+                    idx = point_to_index(point, block_size)
+                    idx = (idx[0]-kurang[0], idx[1]-kurang[1])
+                    state_obstacles[idx[0]][idx[1]] = 1
+
+        #* Putar state selalu liat atas
+        state_obstacles = rotate_state(state_obstacles, direction)
+        #* Buat 1 dimensi
+        state_obstacles = list(np.array(state_obstacles).reshape(1, -1)[0])
+        return state_obstacles
