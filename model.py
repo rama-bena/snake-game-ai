@@ -69,10 +69,10 @@ class QTrainer:
             action_idx = torch.argmax(action[idx]).item() 
             target[idx][action_idx] = Q_new 
 
-        # kosongkan dulu gradien sebelumnya
+        #* kosongkan dulu gradien sebelumnya
         self.optimizer.zero_grad()
-        # cari nilai loss
+        #* cari nilai loss
         loss = self.criterion(target, prediction)
-        # lakukan back propagation
+        #* lakukan back propagation
         loss.backward()
         self.optimizer.step()
