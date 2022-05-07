@@ -76,13 +76,13 @@ class SnakeGameAI:
         
         #* Cek Game Over
         if self.is_collision():
-            reward = -100
+            reward = -1000
             game_over = True
             caution_death = 'nabrak diri' if self.head in self.snake[1:] else 'nabrak tembok'
             return reward, game_over, caution_death, self.score
 
         if self.frame_iteration > self.MAX_ITERATION:
-            reward = -100
+            reward = -1000
             game_over = True
             caution_death = 'lama gak makan'
             return reward, game_over, caution_death, self.score

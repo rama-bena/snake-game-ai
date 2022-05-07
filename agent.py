@@ -14,14 +14,15 @@ class Agent:
         self.epsilon    = epsilon # randomness exploration -> berapa persen awalnya tingkat random gerakan
         self.memory     = deque(maxlen=max_memory) # otomatis pop left jika len memory > max_memory
         self.n_games    = 0
-        self.model      = Linear_QNet(input_size=85, hidden_size=256, output_size=3)
+        self.model      = Linear_QNet(input_size=86, hidden_size=128, output_size=3)
         self.trainer    = QTrainer(self.model, learning_rate, gamma)
     
     #* ----------------------------- Public Method ---------------------------- #
     def get_state(self, game:SnakeGameAI):
         state_obstacles = self._get_state_obstacles(game)
         state_food = self._get_state_food(game.head, game.food, game.direction)
-        final_state = state_obstacles + state_food
+        state_iteration = [game.frame_iteration / game.MAX_ITERATION]
+        final_state = state_obstacles + state_food + state_iteration
         return final_state
 
     def get_action(self, state):
@@ -90,7 +91,6 @@ class Agent:
     def _get_state_obstacles(self, game:SnakeGameAI):
         def point_to_index(point:Point, block_size): # Fungsi bantuan mengubah point menjadi index
             return (point.y//block_size, point.x//block_size)
-
         def rotate_state(state, direction):
             if direction == Direction.UP:
                 return state
