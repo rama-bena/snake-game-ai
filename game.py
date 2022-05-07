@@ -1,9 +1,6 @@
 import pygame
 import random
-from librarybantuan.direction import Direction, Turn
-from librarybantuan.color import Color
-from collections import namedtuple
-Point = namedtuple('Point', ['x', 'y'])
+from librarybantuan.nameValue import Point, Move, Color
 
 class SnakeGameAI:
     def __init__(self, width=640, height=420, block_size=20, speed=20):
@@ -33,7 +30,6 @@ class SnakeGameAI:
         """        
         
         #* Init snake state
-        self.direction = Direction.RIGHT
         self.head = Point(((self.WIDTH//2)//self.BLOCK_SIZE)*self.BLOCK_SIZE, 
                             ((self.HEIGHT//2)//self.BLOCK_SIZE)*self.BLOCK_SIZE)
         self.snake = [self.head,                                            # Isi snake awal yaitu kepala
@@ -158,27 +154,17 @@ class SnakeGameAI:
             if event.type == pygame.QUIT:
                 pygame.quit()
 
-    def _move(self, action): # ? cek tipe data action
+    def _move(self, action):
         x = self.head.x
         y = self.head.y
 
-        clock_wise = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
-        idx = clock_wise.index(self.direction)
-
-        if action == Turn.RIGHT:
-            idx = (idx+1) % 4
-        elif action == Turn.LEFT:
-            idx = (idx-1) % 4
-        
-        self.direction = clock_wise[idx]
-
-        if self.direction == Direction.LEFT:
+        if action == Move.LEFT:
             x -= self.BLOCK_SIZE
-        elif self.direction == Direction.RIGHT:
+        elif action == Move.RIGHT:
             x += self.BLOCK_SIZE
-        elif self.direction == Direction.UP:
+        elif action == Move.UP:
             y -= self.BLOCK_SIZE
-        elif self.direction == Direction.DOWN:
+        elif action == Move.DOWN:
             y += self.BLOCK_SIZE
         
         self.head = Point(x, y)

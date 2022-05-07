@@ -4,13 +4,11 @@
 
 ### `Mayor`
 
-- [ ] Buat state 10x10
+- Buat action 4 arah
 
 ### `Minor`
 
-- [ ] Update plot jadi ada caution death
+- Update plot jadi ada caution death
   - ?pakai scatter plot dan beri warna berbeda
-
-- [ ] agent.py: jadikan state fungsi kecil kecil
 
 ## `BUG`

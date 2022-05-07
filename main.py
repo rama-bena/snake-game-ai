@@ -11,7 +11,7 @@ def main():
     #* Argumen
     width      = 640
     height     = 480
-    speed      = 40      # semakin tinggi semakin cepet, khusus 0 paling cepet
+    speed      = 0      # semakin tinggi semakin cepet, khusus 0 paling cepet
     epsilon    = 100
     max_memory = 100_000
 
@@ -43,6 +43,7 @@ def main():
         if game_over:
             scores.append(score)
             plot(scores, degree=4)
+            
             game.reset()
             agent.n_games += 1
             if score > best_score:
