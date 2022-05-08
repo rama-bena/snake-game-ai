@@ -24,7 +24,7 @@ def main():
         state_old = agent.get_state(game)
         # cari gerakan sesuai dengan state sekarang
         action = agent.get_action(state_old)
-        # no_ui = agent.n_games < 100
+        no_ui = agent.n_games < 300
         no_ui = False
         try:
             # lakukan gerakannya
@@ -42,8 +42,8 @@ def main():
 
         if game_over:
             scores.append(score)
-            plot(scores, degree=4)
-            
+            # plot(scores)
+
             game.reset()
             agent.n_games += 1
             if score > best_score:

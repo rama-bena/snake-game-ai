@@ -35,7 +35,8 @@ class SnakeGameAI:
         self.snake = [self.head,                                            # Isi snake awal yaitu kepala
                       Point(self.head.x-self.BLOCK_SIZE, self.head.y),      # badan pertama di kiri kepala
                       Point(self.head.x-(2*self.BLOCK_SIZE), self.head.y)]  # badan kedua 2 kali di kiri kepala 
-        
+        self.direction = Move.RIGHT
+
         #* Init score dan food
         self.score = 0         
         self.food = None
@@ -65,10 +66,14 @@ class SnakeGameAI:
         self._quit_listener()
 
         #* Gerak
-        self._move(action)
+        is_action_opposite_direction = self._move(action)
         self.snake.insert(0, self.head)
+
+        #* Reward awal
         distance_after_move = self._distance(self.head, self.food)
         reward = 1.0 if distance_before_move > distance_after_move else -1.5
+        if is_action_opposite_direction:
+            reward -= 1000
         
         #* Cek Game Over
         if self.is_collision():
@@ -157,17 +162,30 @@ class SnakeGameAI:
     def _move(self, action):
         x = self.head.x
         y = self.head.y
+        is_action_opposite_direction = False
 
-        if action == Move.LEFT:
+        if action==Move.UP and self.direction==Move.DOWN:
+            is_action_opposite_direction = True
+        elif action==Move.RIGHT and self.direction==Move.LEFT:
+            is_action_opposite_direction = True
+        elif action==Move.DOWN and self.direction==Move.UP:
+            is_action_opposite_direction = True
+        elif action==Move.LEFT and self.direction==Move.RIGHT:
+            is_action_opposite_direction = True
+        else:
+            self.direction = action
+
+        if self.direction == Move.LEFT:
             x -= self.BLOCK_SIZE
-        elif action == Move.RIGHT:
+        elif self.direction == Move.RIGHT:
             x += self.BLOCK_SIZE
-        elif action == Move.UP:
+        elif self.direction == Move.UP:
             y -= self.BLOCK_SIZE
-        elif action == Move.DOWN:
+        elif self.direction == Move.DOWN:
             y += self.BLOCK_SIZE
-        
+            
         self.head = Point(x, y)
+        return is_action_opposite_direction
 
     def _distance(self, point1, point2):
         # Manhattan Distance 2 point        
