@@ -72,7 +72,7 @@ class SnakeGameAI:
         self._move(action)
         self.snake.insert(0, self.head)
         distance_after_move = self._distance(self.head, self.food)
-        reward = 0.1 if distance_after_move<distance_before_move else -0.15
+        # reward = 0.1 if distance_after_move<distance_before_move else -0.15
 
         #* Cek Game Over
         if self.is_collision():
