@@ -62,7 +62,7 @@ class SnakeGameAI:
         reward        = 0
         game_over     = False
         caution_death = 'not die'
-        # distance_before_move = self._distance(self.head, self.food)
+        distance_before_move = self._distance(self.head, self.food)
         self.frame_iteration += 1
 
         #* Cek pencet keluar
@@ -71,8 +71,8 @@ class SnakeGameAI:
         #* Gerak
         self._move(action)
         self.snake.insert(0, self.head)
-        # distance_after_move = self._distance(self.head, self.food)
-        # reward = distance_before_move - distance_after_move
+        distance_after_move = self._distance(self.head, self.food)
+        reward = 0.1 if distance_after_move<distance_before_move else -0.15
 
         #* Cek Game Over
         if self.is_collision():
