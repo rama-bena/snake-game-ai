@@ -30,6 +30,8 @@ class Linear_QNet(nn.Module):
         file_path = os.path.join(folder_path+file_name)
         torch.save(self.state_dict(), file_path)
 
+    def load(self):
+        self.load_state_dict(torch.load('./model/mymodel.model'))
 
 class QTrainer:
     def __init__(self, model:Linear_QNet, learning_rate, gamma):

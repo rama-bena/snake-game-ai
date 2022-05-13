@@ -14,7 +14,8 @@ class Agent:
         self.memory     = deque(maxlen=max_memory) # otomatis pop left jika len memory > max_memory
         self.model      = Linear_QNet(input_size=11, hidden_size=64, output_size=3)
         self.trainer    = QTrainer(self.model, learning_rate, gamma)
-    
+        self.model.load()
+        
     #* ----------------------------- Public Method ---------------------------- #
     def get_state(self, game:SnakeGameAI): #? ubah menjadi beberapa fungsi?
         head = game.head
