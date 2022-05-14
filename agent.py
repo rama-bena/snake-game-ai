@@ -1,22 +1,31 @@
+import os
 import numpy as np
 import torch
 import random
 from collections import deque
-import itertools
+import pickle
 
 from librarybantuan.direction import Direction
 from game import SnakeGameAI, Point
 from model import Linear_QNet, QTrainer
+import numpy as np
 
 class Agent:
     def __init__(self, max_memory=100_000, batch_size=1000, epsilon=100, learning_rate=0.001, gamma=0.9):
         self.BATCH_SIZE = batch_size
         self.epsilon    = epsilon # randomness exploration -> berapa persen awalnya tingkat random gerakan
-        self.memory     = deque(maxlen=max_memory) # otomatis pop left jika len memory > max_memory
         self.n_games    = 0
+        self.memory     = deque(maxlen=max_memory) # otomatis pop left jika len memory > max_memory
         self.model      = Linear_QNet(input_size=86, hidden_size=128, output_size=3)
         self.trainer    = QTrainer(self.model, learning_rate, gamma)
-    
+
+        self.model.load()
+        try:
+            with open('./model/memory.mem', 'rb') as f :
+                self.memory = pickle.load(f)
+        except:
+            pass
+
     #* ----------------------------- Public Method ---------------------------- #
     def get_state(self, game:SnakeGameAI):
         state_obstacles = self._get_state_obstacles(game)
@@ -32,7 +41,7 @@ class Agent:
         final_move = [0, 0, 0]
 
         # 100 artinya persen, jika pilih exploration. Ketika epsilon 0 atau minus, maka tidak akan ada random lagi
-        if random.randint(1, 100) <= new_epsilon: 
+        if random.randint(1, 100) <= 0: 
             move = random.randint(0, 2)
             final_move[move] = 1
         else:
@@ -48,24 +57,22 @@ class Agent:
 
     def remember(self, state, action, reward, next_state, game_over):
         if (state, action, reward, next_state, game_over) not in self.memory: # hanya masukin data yang tidak ada di memory
-            self.memory.append((state, action, reward, next_state, game_over)) 
+            self.memory.append((state, action, reward, next_state, game_over))
 
     def train_short_memory(self, state, action, reward, next_state, game_over):
         self.trainer.train_step(state, action, reward, next_state, game_over)
         
     def train_long_memory(self):
-        ## Ambil sampel dari memory sebanyak batch_size atau seluruh memory jika memory lebih kecil dari batch_size
-        # mini_size = min(len(self.memory), self.BATCH_SIZE)
-        # mini_sample = random.sample(self.memory, mini_size)
-        # mini_sample = self.memory # gak pakek batch. Kode diatas pakai batch
-        if len(self.memory) < 5000:
-            mini_sample = self.memory
-        else:
-            mini_sample = list(itertools.islice(self.memory, len(self.memory)-5000, len(self.memory)))
-
-        # Ekstrak setiap paramater lalu train
-        states, actions, rewards, next_states, game_overs = zip(*mini_sample)
-        self.trainer.train_step(states, actions, rewards, next_states, game_overs)
+        memory = list(self.memory)
+        states, actions, rewards, next_states, game_overs = zip(*memory)
+        self.BATCH_SIZE = len(memory)
+        for i in range(0, len(memory), self.BATCH_SIZE):
+            batch_states      = states[i:i+self.BATCH_SIZE]
+            batch_actions     = actions[i:i+self.BATCH_SIZE]
+            batch_rewards     = rewards[i:i+self.BATCH_SIZE]
+            batch_next_states = next_states[i:i+self.BATCH_SIZE]
+            batch_game_overs  = game_overs[i:i+self.BATCH_SIZE]
+            self.trainer.train_step(batch_states, batch_actions, batch_rewards, batch_next_states, batch_game_overs)
 
     #* ---------------------------- Private Method ---------------------------- #
     def _get_state_food(self, head, food, direction):
@@ -125,3 +132,5 @@ class Agent:
         #* Buat 1 dimensi
         state_obstacles = list(np.array(state_obstacles).reshape(1, -1)[0])
         return state_obstacles
+
+    

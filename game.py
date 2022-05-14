@@ -72,24 +72,24 @@ class SnakeGameAI:
         self._move(action)
         self.snake.insert(0, self.head)
         distance_after_move = self._distance(self.head, self.food)
-        reward = 1.0 if distance_before_move > distance_after_move else -1.5
+        reward = 0.001 if distance_before_move > distance_after_move else -0.0015
         
         #* Cek Game Over
         if self.is_collision():
-            reward = -1000
+            reward = -10
             game_over = True
             caution_death = 'nabrak diri' if self.head in self.snake[1:] else 'nabrak tembok'
             return reward, game_over, caution_death, self.score
 
         if self.frame_iteration > self.MAX_ITERATION:
-            reward = -1000
+            reward = -10
             game_over = True
             caution_death = 'lama gak makan'
             return reward, game_over, caution_death, self.score
 
         #* Cek makan food atau tidak
         if self.head == self.food:
-            reward = 100
+            reward = 10
             self.score += 1
             self.frame_iteration = 0
             self._place_food()
