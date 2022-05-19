@@ -13,7 +13,7 @@ if __name__ == '__main__':
     #* Argumen
     width      = 640
     height     = 480
-    speed      = 0      # semakin tinggi semakin cepet, khusus 0 paling cepet
+    speed      = 40      # semakin tinggi semakin cepet, khusus 0 paling cepet
     epsilon    = 100
     max_memory = 100_000
 
