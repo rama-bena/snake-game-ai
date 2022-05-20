@@ -21,10 +21,10 @@ if __name__ == '__main__':
 
     #* Argumen
     speed        = 0      # semakin tinggi semakin cepet, khusus 0 paling cepet
-    epsilon_rate = 100    # pengurangan gerakan random, lebih atau sama dengan 100 -> tanpa random
+    epsilon_rate = 100      # pengurangan gerakan random, lebih atau sama dengan 100 -> tanpa random
     max_memory   = 100_000
-    visual_range = 3
-    title = "vr=3, eps=no_eps"
+    visual_range = 9
+    title = f"vr={visual_range}, eps={epsilon_rate if epsilon_rate<100 else 'no_eps'}"
 
     #* Buat object game dan agent
     agent = Agent(visual_range=visual_range, max_memory=max_memory, epsilon_rate=epsilon_rate)
