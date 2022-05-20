@@ -2,33 +2,42 @@ from game import SnakeGameAI
 from agent import Agent
 from librarybantuan.plot import plot
 import pickle
+import time
+
+def format_time(seconds):
+    second = seconds % 60
+    minute = seconds // 60
+    hour = minute // 60
+    minute = minute % 60
+
+    return f"{hour}h {minute}m {round(second,2)}s"
+
 
 if __name__ == '__main__':
     #* Variabel
     scores     = [0] # game ke-0 nilainya 0
-    best_score = 0
+    best_score = (0, 0) # nilai best score, game menghasilkan best score
     total_reward = 0
-    # rewards = [0]
-    title = "vr=9, eps=no_eps"
 
     #* Argumen
-    width        = 640
-    height       = 480
     speed        = 0      # semakin tinggi semakin cepet, khusus 0 paling cepet
     epsilon_rate = 100    # pengurangan gerakan random, lebih atau sama dengan 100 -> tanpa random
     max_memory   = 100_000
+    visual_range = 1
+    title = "vr=1, eps=no_eps"
 
     #* Buat object game dan agent
-    agent = Agent(max_memory=max_memory, epsilon_rate=epsilon_rate)
-    game = SnakeGameAI(width=width, height=height, speed=speed)
+    agent = Agent(visual_range=visual_range, max_memory=max_memory, epsilon_rate=epsilon_rate)
+    game = SnakeGameAI(speed=speed)
     try:
+        start = time.time()
         while True:
             # dapatkan state sekarang
             state_old = agent.get_state(game)
             # cari gerakan sesuai dengan state sekarang
             action = agent.get_action(state_old)
             with_ui = agent.n_games > 100
-            # with_ui = True
+            with_ui = True
             try:
                 # lakukan gerakannya
                 reward, game_over, caution_death, score = game.play_step(action, with_ui)
@@ -45,17 +54,17 @@ if __name__ == '__main__':
             agent.train_short_memory(state_old, action, reward, state_new, game_over)
 
             if game_over:
-                # rewards.append(total_reward)
                 scores.append(score)
                 plot(scores, title=title)
                 game.reset()
                 agent.n_games += 1
-                if score > best_score:
-                    best_score = score
+                if score > best_score[0]:
+                    best_score = (score, agent.n_games)
                     agent.model.save()
                 print(f"Game: {agent.n_games}")
-                print(f"Tingkat random: {max(100 - agent.epsilon_rate*agent.n_games, 0)}%")
-                print(f"Score: {score}, Best score: {best_score}")
+                print(f"Time: {format_time(time.time()-start)}")
+                print(f"Randomness: {max(100 - agent.epsilon_rate*agent.n_games, 0)}%")
+                print(f"Score: {score}, Best score: {best_score[0]}, {best_score[1]}")
                 print(f"Reward: {total_reward}")
                 print(f"Caution Death:{caution_death}")
                 print()
@@ -67,7 +76,7 @@ if __name__ == '__main__':
         print('keluar paksa')
     finally:
         print('finally')
-        plot(scores, title=title, interative=False)
         with open('./model/memory.mem', "wb") as f:
             pickle.dump(agent.memory, f)
+        plot(scores, title=title, interative=False)
             
