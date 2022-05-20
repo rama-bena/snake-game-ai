@@ -11,13 +11,14 @@ from model import Linear_QNet, QTrainer
 import numpy as np
 
 class Agent:
-    def __init__(self, max_memory=100_000, batch_size=1000, epsilon=100, learning_rate=0.001, gamma=0.9):
-        self.BATCH_SIZE = batch_size
-        self.epsilon    = epsilon # randomness exploration -> berapa persen awalnya tingkat random gerakan
-        self.n_games    = 0
-        self.memory     = deque(maxlen=max_memory) # otomatis pop left jika len memory > max_memory
-        self.model      = Linear_QNet(input_size=86, hidden_size=128, output_size=3)
-        self.trainer    = QTrainer(self.model, learning_rate, gamma)
+    def __init__(self, visual_range=9, max_memory=100_000, batch_size=1000, epsilon_rate=1., learning_rate=0.001, gamma=0.9):
+        self.VISUAL_RANGE = visual_range
+        self.BATCH_SIZE   = batch_size
+        self.epsilon_rate = epsilon_rate # randomness exploration -> berapa persen awalnya tingkat random gerakan
+        self.n_games      = 0
+        self.memory       = deque(maxlen=max_memory) # otomatis pop left jika len memory > max_memory
+        self.model        = Linear_QNet(input_size=self.VISUAL_RANGE**2+5, hidden_size=128, output_size=3)
+        self.trainer      = QTrainer(self.model, learning_rate, gamma)
 
         self.model.load()
         try:
@@ -28,7 +29,7 @@ class Agent:
 
     #* ----------------------------- Public Method ---------------------------- #
     def get_state(self, game:SnakeGameAI):
-        state_obstacles = self._get_state_obstacles(game)
+        state_obstacles = self._get_state_obstacles(game, self.VISUAL_RANGE)
         state_food = self._get_state_food(game.head, game.food, game.direction)
         state_iteration = [game.frame_iteration / game.MAX_ITERATION]
         final_state = state_obstacles + state_food + state_iteration
@@ -36,12 +37,12 @@ class Agent:
 
     def get_action(self, state):
         # Random moves: tradeoff exploration / exploitation
-        new_epsilon = self.epsilon-self.n_games # epsilon semakin lama semakin kecil -> semakin sedikit random gerakan
+        epsilon = 100 - (self.epsilon_rate*self.n_games) # epsilon semakin lama semakin kecil -> semakin sedikit gerakan random
         # OHE dari move = [straight, turn_right, turn_left]
         final_move = [0, 0, 0]
 
         # 100 artinya persen, jika pilih exploration. Ketika epsilon 0 atau minus, maka tidak akan ada random lagi
-        if random.randint(1, 100) <= 0: 
+        if random.randint(1, 100) <= epsilon: 
             move = random.randint(0, 2)
             final_move[move] = 1
         else:
@@ -95,7 +96,7 @@ class Agent:
         state_food = [initial_state[(i+how_many_turn_right)%4] for i in range(4)]
         return state_food
    
-    def _get_state_obstacles(self, game:SnakeGameAI):
+    def _get_state_obstacles(self, game:SnakeGameAI, visual_range):
         def point_to_index(point:Point, block_size): # Fungsi bantuan mengubah point menjadi index
             return (point.y//block_size, point.x//block_size)
         def rotate_state(state, direction):
@@ -115,7 +116,6 @@ class Agent:
         block_size = game.BLOCK_SIZE
 
         #* Buat state obstacle, 1:ada obstacle, 0:tidak ada
-        visual_range = 9
         state_obstacles = [[0 for _ in range(visual_range)] for __ in range(visual_range)]
         titik_awal = Point(head.x-(visual_range//2)*block_size, head.y-(visual_range//2)*block_size)
         kurang = point_to_index(titik_awal, block_size)

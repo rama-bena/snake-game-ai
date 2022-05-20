@@ -7,27 +7,27 @@ from captum.attr import IntegratedGradients
 
 plt.ion()
 
-def plot(scores, rewards, iterative=True):
-    display.clear_output(wait=True)
-    display.display(plt.gcf())
+def plot(scores, title, interative=True):
+    # display.clear_output(wait=True)
+    # display.display(plt.gcf())
     plt.clf()
-    plt.title('Training...')
+    plt.title(title)
     plt.xlabel('Number of Games')
     plt.ylabel('Value')
 
     plt.plot(scores, label='score')
-    plt.plot(rewards, label='reward')
+    # plt.plot(rewards, label='reward')
 
     plt.text(len(scores)-1, scores[-1], str(scores[-1]))
-    plt.text(len(rewards)-1, rewards[-1], str(rewards[-1]))
+    # plt.text(len(rewards)-1, rewards[-1], str(rewards[-1]))
     
     plt.legend()
 
-    if iterative:
+    if interative:
         plt.show(block=False)
         plt.pause(.1)
     else:
-        plt.show()
+        plt.show(block=True)
 
 def feature_importance(model, state, target, title):
         ig = IntegratedGradients(model)

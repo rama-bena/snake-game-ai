@@ -49,7 +49,7 @@ class SnakeGameAI:
         #* Terakhir update UI
         self._update_ui()
 
-    def play_step(self, action, no_ui=False):
+    def play_step(self, action, with_ui=True):
         """`Description`:
             Fungsi utama untuk menjalankan ular sesuai dengan action
         `Args`:
@@ -97,7 +97,7 @@ class SnakeGameAI:
             self.snake.pop()
 
         #* Update UI dan beri delay
-        if not no_ui:
+        if with_ui:
             self._update_ui()
             self.clock.tick(self.SPEED)
 
