@@ -7,8 +7,8 @@ import time
 def format_time(seconds):
     second = seconds % 60
     minute = seconds // 60
-    hour = minute // 60
-    minute = minute % 60
+    hour = int(minute // 60)
+    minute = int(minute % 60)
 
     return f"{hour}h {minute}m {round(second,2)}s"
 
@@ -23,8 +23,8 @@ if __name__ == '__main__':
     speed        = 0      # semakin tinggi semakin cepet, khusus 0 paling cepet
     epsilon_rate = 100    # pengurangan gerakan random, lebih atau sama dengan 100 -> tanpa random
     max_memory   = 100_000
-    visual_range = 1
-    title = "vr=1, eps=no_eps"
+    visual_range = 3
+    title = "vr=3, eps=no_eps"
 
     #* Buat object game dan agent
     agent = Agent(visual_range=visual_range, max_memory=max_memory, epsilon_rate=epsilon_rate)
