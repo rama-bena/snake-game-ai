@@ -1,9 +1,6 @@
-from cProfile import label
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy import interpolate
-from IPython import display
 from captum.attr import IntegratedGradients
 
 degrees = [2, 5, 10, 20, 50]
@@ -30,6 +27,7 @@ def plot(scores, title, interative=True):
     plt.plot(x_list, y_list, label='score rate')
 
     plt.legend()
+    plt.grid()
 
     if interative:
         plt.show(block=False)
