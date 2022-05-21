@@ -1,8 +1,10 @@
 from game import SnakeGameAI
 from agent import Agent
-from librarybantuan.plot import plot
 import pickle
 import time
+
+from librarybantuan.plot import plot
+from librarybantuan.nameValue import Path
 
 def format_time(seconds):
     second = seconds % 60
@@ -21,8 +23,8 @@ if __name__ == '__main__':
 
     #* Argumen
     speed        = 0      # semakin tinggi semakin cepet, khusus 0 paling cepet
-    epsilon_rate = 100      # pengurangan gerakan random, lebih atau sama dengan 100 -> tanpa random
-    max_memory   = 100_000
+    epsilon_rate = 1      # pengurangan gerakan random, lebih atau sama dengan 100 -> tanpa random
+    max_memory   = 1000
     visual_range = 9
     title = f"vr={visual_range}, eps={epsilon_rate if epsilon_rate<100 else 'no_eps'}"
 
@@ -76,7 +78,7 @@ if __name__ == '__main__':
         print('keluar paksa')
     finally:
         print('finally')
-        with open('./model/memory.mem', "wb") as f:
+        with open(Path.MEMORY, "wb") as f:
             pickle.dump(agent.memory, f)
         plot(scores, title=title, interative=False)
             

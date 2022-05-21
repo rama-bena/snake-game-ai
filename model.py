@@ -4,6 +4,8 @@ import torch.optim as optim
 import torch.nn.functional as F
 import os
 
+from librarybantuan.nameValue import Path
+
 class Linear_QNet(nn.Module):
     """ Arsitektur Neural Network
             1. FeedForward dari input layer ke hidden layer
@@ -31,8 +33,8 @@ class Linear_QNet(nn.Module):
         torch.save(self.state_dict(), file_path)
     
     def load(self):
-        if os.path.exists('./model/mymodel.model'):
-            self.load_state_dict(torch.load('./model/mymodel.model'))
+        if os.path.exists(Path.MODEL):
+            self.load_state_dict(torch.load(Path.MODEL))
 
 
 class QTrainer:

@@ -1,7 +1,6 @@
 import pygame
 import random
-from librarybantuan.direction import Direction, Turn
-from librarybantuan.color import Color
+from librarybantuan.nameValue import Direction, Turn, Color
 from collections import namedtuple
 Point = namedtuple('Point', ['x', 'y'])
 
@@ -72,7 +71,7 @@ class SnakeGameAI:
         self._move(action)
         self.snake.insert(0, self.head)
         distance_after_move = self._distance(self.head, self.food)
-        reward = 0.001 if distance_before_move > distance_after_move else -0.0015
+        # reward = 0.001 if distance_before_move > distance_after_move else -0.0015
         
         #* Cek Game Over
         if self.is_collision():

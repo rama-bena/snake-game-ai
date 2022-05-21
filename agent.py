@@ -1,14 +1,12 @@
-import os
 import numpy as np
 import torch
 import random
 from collections import deque
 import pickle
 
-from librarybantuan.direction import Direction
 from game import SnakeGameAI, Point
 from model import Linear_QNet, QTrainer
-import numpy as np
+from librarybantuan.nameValue import Direction, Path
 
 class Agent:
     def __init__(self, visual_range=9, max_memory=100_000, batch_size=1000, epsilon_rate=1., learning_rate=0.001, gamma=0.9):
@@ -22,7 +20,7 @@ class Agent:
 
         self.model.load()
         try:
-            with open('./model/memory.mem', 'rb') as f :
+            with open(Path.MEMORY, 'rb') as f :
                 self.memory = pickle.load(f)
         except:
             pass
