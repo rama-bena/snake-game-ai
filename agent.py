@@ -15,7 +15,7 @@ class Agent:
         self.epsilon_rate = epsilon_rate # randomness exploration -> berapa persen awalnya tingkat random gerakan
         self.n_games      = 0
         self.memory       = deque(maxlen=max_memory) # otomatis pop left jika len memory > max_memory
-        self.model        = Linear_QNet(input_size=self.VISUAL_RANGE**2+5, hidden_size=128, output_size=3)
+        self.model        = Linear_QNet(input_size=self.VISUAL_RANGE**2+5, hidden_size1=512, hidden_size2=128, output_size=3)
         self.trainer      = QTrainer(self.model, learning_rate, gamma)
 
         self.model.load()
@@ -55,8 +55,8 @@ class Agent:
         return final_move
 
     def remember(self, state, action, reward, next_state, game_over):
-        if (state, action, reward, next_state, game_over) not in self.memory: # hanya masukin data yang tidak ada di memory
-            self.memory.append((state, action, reward, next_state, game_over))
+        # if (state, action, reward, next_state, game_over) not in self.memory: # hanya masukin data yang tidak ada di memory
+        self.memory.append((state, action, reward, next_state, game_over))
 
     def train_short_memory(self, state, action, reward, next_state, game_over):
         self.trainer.train_step(state, action, reward, next_state, game_over)

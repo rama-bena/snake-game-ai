@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     #* Argumen
     speed        = 0      # semakin tinggi semakin cepet, khusus 0 paling cepet
-    epsilon_rate = 0.5      # pengurangan gerakan random, lebih atau sama dengan 100 -> tanpa random
+    epsilon_rate = 0.3      # pengurangan gerakan random, lebih atau sama dengan 100 -> tanpa random
     max_memory   = 5000
     visual_range = 21
     title = f"vr={visual_range}, eps={epsilon_rate if epsilon_rate<100 else 'no_eps'}"
