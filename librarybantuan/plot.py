@@ -8,7 +8,7 @@ def plot(scores, degree=5, iterative=True):
     display.clear_output(wait=True)
     display.display(plt.gcf())
     plt.clf()
-    plt.title('Training...')
+    plt.title('Skor per game')
     plt.xlabel('Number of Games')
     plt.ylabel('Score')
 

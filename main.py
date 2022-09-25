@@ -12,7 +12,7 @@ def main():
     width      = 640
     height     = 480
     speed      = 0      # semakin tinggi semakin cepet, khusus 0 paling cepet
-    epsilon    = 100
+    epsilon    = 200    # randomness exploration -> gerakan akan random selama "epsilon" game pertama
     max_memory = 100_000
 
     #* Buat object game dan agent

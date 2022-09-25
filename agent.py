@@ -9,7 +9,7 @@ from model import Linear_QNet, QTrainer
 class Agent:
     def __init__(self, max_memory=100_000, batch_size=1000, epsilon=100, learning_rate=0.001, gamma=0.9):
         self.BATCH_SIZE = batch_size
-        self.epsilon    = epsilon # randomness exploration -> berapa persen awalnya tingkat random gerakan
+        self.epsilon    = epsilon 
         self.n_games    = 0
         self.memory     = deque(maxlen=max_memory) # otomatis pop left jika len memory > max_memory
         self.model      = Linear_QNet(input_size=11, hidden_size=64, output_size=3)
@@ -66,13 +66,13 @@ class Agent:
         return list(map(int, state))
 
     def get_action(self, state):
-        # Random moves: tradeoff exploration / exploitation
-        new_epsilon = self.epsilon-self.n_games # epsilon semakin lama semakin kecil -> semakin sedikit random gerakan
+        # Random moves: tradeoff exploration/exploitation
+        new_epsilon = self.epsilon-self.n_games # new_epsilon semakin lama semakin kecil -> semakin sedikit random gerakan
         # OHE dari move = [straight, turn_right, turn_left]
         final_move = [0, 0, 0]
 
-        # 100 artinya persen, jika pilih exploration. Ketika epsilon 0 atau minus, maka tidak akan ada random lagi
-        if random.randint(1, 100) <= new_epsilon: 
+        # jika pilih exploration. Ketika new_epsilon 0 atau minus, maka tidak akan ada random lagi
+        if random.randint(1, self.epsilon) <= new_epsilon: 
             move = random.randint(0, 2)
             final_move[move] = 1
         else:
